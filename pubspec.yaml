@@ -26,11 +26,18 @@ dependencies:
   timezone: ^0.10.0
   permission_handler: ^11.0.0
 
+  # Vibration (for alarm)
+  vibration: ^2.0.0
+
   # Animations (Lottie)
   lottie: ^3.3.1
 
   # Sound Effects
   audioplayers: ^6.1.0
+
+  # Database
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
 
   # Utilities
   uuid: ^4.0.0

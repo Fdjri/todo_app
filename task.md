@@ -31,25 +31,25 @@
 - [x] Task datasource & repository (task_local_datasource.dart, task_repository.dart, task_repository_impl.dart)
 - [x] Task BLoC (task_bloc.dart — events, states, bloc combined)
 - [x] Task pages (home_page.dart, add_task_page.dart, task_detail_page.dart)
-- [ ] Task widgets — fca-cli stubs need real implementations:
-  - [ ] task_card_widget.dart
-  - [ ] task_list_widget.dart
-  - [ ] sub_task_item_widget.dart
-  - [ ] priority_selector_widget.dart
-  - [ ] quick_add_fab_widget.dart
-  - [ ] category_filter_bar_widget.dart
+- [x] Task widgets — all implemented:
+  - [x] task_card_widget.dart
+  - [x] task_list_widget.dart
+  - [x] sub_task_item_widget.dart
+  - [x] priority_selector_widget.dart
+  - [x] quick_add_fab_widget.dart
+  - [x] category_filter_bar_widget.dart
 - [x] Category entity, model, datasource, repo, BLoC
-- [ ] Category widgets — fca-cli stubs need real implementations:
-  - [ ] category_chip_widget.dart
-  - [ ] category_picker_sheet_widget.dart
-- [ ] Notification alarm screen — fca-cli stub needs real implementation:
-  - [ ] alarm_screen_page.dart (full-screen alarm with Lottie + sound)
+- [x] Category widgets — all implemented:
+  - [x] category_chip_widget.dart
+  - [x] category_picker_sheet_widget.dart
+- [x] Notification alarm screen — implemented:
+  - [x] alarm_screen_page.dart (full-screen alarm with Lottie + sound)
 - [x] Gamification entity, datasource, BLoC
-- [ ] Gamification widgets — fca-cli stubs need real implementations:
-  - [ ] streak_counter_widget.dart
-  - [ ] level_badge_widget.dart
-  - [ ] achievement_card_widget.dart
-  - [ ] xp_progress_bar_widget.dart
+- [x] Gamification widgets — all implemented:
+  - [x] streak_counter_widget.dart
+  - [x] level_badge_widget.dart
+  - [x] achievement_card_widget.dart
+  - [x] xp_progress_bar_widget.dart
 
 ## Phase 5: App Shell & Routing
 - [x] injection_container.dart
@@ -71,9 +71,12 @@
 - [x] Theme persistence (SharedPreferences)
 - [x] Dark mode toggle button (in home_page header)
 
-## Remaining Work
-- [ ] Implement all stub widgets with real UI
-- [ ] Implement alarm screen with Lottie + sound
-- [ ] Fix test/widget_test.dart (references old MyApp)
-- [ ] flutter analyze — verify 0 errors
-- [ ] flutter build apk — verify compilation
+## Verification
+- [x] Fix test/widget_test.dart (references WorkaholicApp correctly)
+- [x] flutter analyze — 0 issues found ✅
+- [x] Fix android/app/build.gradle.kts — enable core library desugaring (flutter_local_notifications)
+- [x] Set minSdk = 21 (required by android_alarm_manager_plus)
+- [x] flutter build apk --debug — ✅ BUILD SUCCESSFUL
+  - APK: build\app\outputs\flutter-apk\app-debug.apk
+
+## 🎀 PROJECT COMPLETE!

@@ -11,7 +11,6 @@ import '../../../../core/theme/theme_bloc.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/bow_divider.dart';
 import '../../../../core/widgets/coquette_card.dart';
-import '../../../../core/widgets/confetti_overlay.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/pearl_checkbox.dart';
 import '../../../../core/widgets/progress_ring.dart';
@@ -26,37 +25,37 @@ import 'add_task_page.dart';
 import 'task_detail_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  /// Called when a task is toggled complete — triggers confetti + sound in shell.
+  final void Function(BuildContext ctx, String taskId)? onTaskComplete;
+  /// Called when FAB is tapped from shell level.
+  final void Function(BuildContext ctx)? onShowAddTask;
+
+  const HomePage({
+    super.key,
+    this.onTaskComplete,
+    this.onShowAddTask,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  bool _showConfetti = false;
-  late AnimationController _fabController;
-
   @override
   void initState() {
     super.initState();
-    _fabController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-  }
-
-  @override
-  void dispose() {
-    _fabController.dispose();
-    super.dispose();
   }
 
   void _onTaskComplete(String taskId) {
-    context.read<TaskBloc>().add(ToggleTaskCompletion(taskId));
-    context.read<GamificationBloc>().add(TaskCompleted());
-    context.read<GamificationBloc>().add(UpdateStreak());
-    sl<SoundService>().playTaskComplete();
-    setState(() => _showConfetti = true);
+    if (widget.onTaskComplete != null) {
+      widget.onTaskComplete!(context, taskId);
+    } else {
+      // Fallback for standalone usage
+      context.read<TaskBloc>().add(ToggleTaskCompletion(taskId));
+      context.read<GamificationBloc>().add(TaskCompleted());
+      context.read<GamificationBloc>().add(UpdateStreak());
+      sl<SoundService>().playTaskComplete();
+    }
   }
 
   @override
@@ -64,47 +63,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                // ─── Header ───
-                SliverToBoxAdapter(child: _buildHeader(theme, isDark)),
+    return SafeArea(
+      child: CustomScrollView(
+        slivers: [
+          // ─── Header ───
+          SliverToBoxAdapter(child: _buildHeader(theme, isDark)),
 
-                // ─── Bow Divider ───
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: BowDivider(),
-                  ),
-                ),
-
-                // ─── Category Filter ───
-                SliverToBoxAdapter(child: _buildCategoryFilter(theme)),
-
-                // ─── Task List ───
-                _buildTaskList(theme),
-
-                const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-              ],
+          // ─── Bow Divider ───
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: BowDivider(),
             ),
           ),
 
-          // ─── Confetti Overlay ───
-          ConfettiOverlay(
-            play: _showConfetti,
-            onComplete: () => setState(() => _showConfetti = false),
-          ),
+          // ─── Category Filter ───
+          SliverToBoxAdapter(child: _buildCategoryFilter(theme)),
+
+          // ─── Task List ───
+          _buildTaskList(theme),
+
+          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
         ],
       ),
-
-      // ─── FAB with bow ───
-      floatingActionButton: _buildFAB(theme),
-
-      // ─── Bottom Nav ───
-      bottomNavigationBar: _buildBottomNav(theme),
     );
   }
 
@@ -678,26 +659,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFAB(ThemeData theme) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.elasticOut,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: FloatingActionButton(
-            onPressed: () => _showAddTask(context),
-            tooltip: AppStrings.fabTooltip,
-            elevation: 8,
-            child: const Icon(Icons.add_rounded, size: 28),
-          ),
-        );
-      },
-    );
-  }
-
   void _showAddTask(BuildContext context) {
+    if (widget.onShowAddTask != null) {
+      widget.onShowAddTask!(context);
+      return;
+    }
+    // Fallback standalone
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -709,26 +676,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
         child: const AddTaskPage(),
       ),
-    );
-  }
-
-  Widget _buildBottomNav(ThemeData theme) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_rounded),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: 'Stats',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_rounded),
-          label: 'Settings',
-        ),
-      ],
     );
   }
 }

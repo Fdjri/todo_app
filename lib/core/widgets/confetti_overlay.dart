@@ -31,7 +31,15 @@ class _ConfettiOverlayState extends State<ConfettiOverlay>
   void didUpdateWidget(ConfettiOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.play && !oldWidget.play) {
-      _controller.forward(from: 0);
+      // Only call forward if the Lottie composition has already been loaded
+      // and duration is set. If not yet loaded, onLoaded will handle the
+      // first play. Subsequent replays come through here.
+      if (_controller.duration != null) {
+        _controller.forward(from: 0).then((_) {
+          widget.onComplete?.call();
+        });
+      }
+      // If duration is null → Lottie not loaded yet → onLoaded will play it
     }
   }
 
@@ -51,11 +59,13 @@ class _ConfettiOverlayState extends State<ConfettiOverlay>
           AppAssets.lottieConfetti,
           controller: _controller,
           onLoaded: (composition) {
-            _controller
-              ..duration = composition.duration
-              ..forward().then((_) {
+            // Set duration first, then play if widget.play is still true
+            _controller.duration = composition.duration;
+            if (widget.play) {
+              _controller.forward(from: 0).then((_) {
                 widget.onComplete?.call();
               });
+            }
           },
           fit: BoxFit.contain,
         ),

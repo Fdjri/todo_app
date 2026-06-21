@@ -33,7 +33,7 @@ class _PearlCheckboxState extends State<PearlCheckbox>
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.15), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.0), weight: 30),
-    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    ]).animate(_controller); // Linear driver — bounce is encoded in tween values
   }
 
   @override

@@ -2,15 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'injection_container.dart';
+import 'main.dart' show navigatorKey;
 import 'core/theme/theme_bloc.dart';
+import 'core/widgets/permission_onboarding_dialog.dart';
 import 'features/task/presentation/bloc/task_bloc.dart';
 import 'features/category/presentation/bloc/category_bloc.dart';
 import 'features/gamification/presentation/bloc/gamification_bloc.dart';
-import 'features/task/presentation/pages/home_page.dart';
+import 'features/alarm/alarm_page.dart';
+import 'presentation/main_shell.dart';
 
-class WorkaholicApp extends StatelessWidget {
-  const WorkaholicApp({super.key});
+class WorkaholicApp extends StatefulWidget {
+  /// If the app was cold-started by tapping an alarm notification,
+  /// these fields carry the task info to show AlarmPage immediately.
+  final String? coldStartAlarmTaskId;
+  final String? coldStartAlarmTitle;
 
+  const WorkaholicApp({
+    super.key,
+    this.coldStartAlarmTaskId,
+    this.coldStartAlarmTitle,
+  });
+
+  @override
+  State<WorkaholicApp> createState() => _WorkaholicAppState();
+}
+
+class _WorkaholicAppState extends State<WorkaholicApp> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -26,10 +43,62 @@ class WorkaholicApp extends StatelessWidget {
             title: 'Workaholic',
             debugShowCheckedModeBanner: false,
             theme: themeState.themeData,
-            home: const HomePage(),
+            navigatorKey: navigatorKey,
+            home: _AppHome(
+              coldStartAlarmTaskId: widget.coldStartAlarmTaskId,
+              coldStartAlarmTitle: widget.coldStartAlarmTitle,
+            ),
           );
         },
       ),
     );
   }
+}
+
+class _AppHome extends StatefulWidget {
+  final String? coldStartAlarmTaskId;
+  final String? coldStartAlarmTitle;
+
+  const _AppHome({
+    this.coldStartAlarmTaskId,
+    this.coldStartAlarmTitle,
+  });
+
+  @override
+  State<_AppHome> createState() => _AppHomeState();
+}
+
+class _AppHomeState extends State<_AppHome> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _postInit();
+    });
+  }
+
+  Future<void> _postInit() async {
+    if (!mounted) return;
+
+    // Show permission onboarding if first launch
+    await PermissionOnboardingDialog.showIfNeeded(context);
+
+    // If cold-started from an alarm notification, open AlarmPage
+    if (widget.coldStartAlarmTaskId != null &&
+        widget.coldStartAlarmTitle != null) {
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: '/alarm'),
+          builder: (_) => AlarmPage(
+            taskId: widget.coldStartAlarmTaskId!,
+            taskTitle: widget.coldStartAlarmTitle!,
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => const MainShell();
 }

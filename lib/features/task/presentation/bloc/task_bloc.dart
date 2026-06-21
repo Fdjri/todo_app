@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/repositories/task_repository.dart';
 
@@ -151,6 +152,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
       await repository.addTask(event.task);
+      // Schedule alarm if requested
+      if (event.task.hasAlarm && event.task.dueDate != null) {
+        await AlarmService().scheduleAlarm(event.task);
+      }
       add(LoadTasks());
     } catch (e) {
       emit(TaskError(e.toString()));
@@ -173,6 +178,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     try {
       await repository.deleteTask(event.taskId);
+      // Cancel any pending alarm for this task
+      await AlarmService().cancelAlarm(event.taskId);
       if (state is TaskLoaded) {
         add(FilterByCategory((state as TaskLoaded).activeCategoryId));
       } else {
@@ -187,6 +194,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       ToggleTaskCompletion event, Emitter<TaskState> emit) async {
     try {
       final updated = await repository.toggleTaskCompletion(event.taskId);
+      // If task just became completed, cancel its alarm
+      if (updated.isCompleted) {
+        await AlarmService().cancelAlarm(event.taskId);
+      }
       final allTasks = await repository.getAllTasks();
       final currentState = state;
       if (currentState is TaskLoaded) {

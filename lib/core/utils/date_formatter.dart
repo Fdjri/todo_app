@@ -46,4 +46,14 @@ class DateFormatter {
         dueDate.month == now.month &&
         dueDate.day == now.day;
   }
+
+  /// e.g., "June 2026"
+  static String formatMonthYear(DateTime date) {
+    return DateFormat('MMMM yyyy').format(date);
+  }
+
+  /// e.g., "Saturday, June 21, 2026"
+  static String formatFullDate(DateTime date) {
+    return DateFormat('EEEE, MMMM d, yyyy').format(date);
+  }
 }

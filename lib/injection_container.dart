@@ -15,6 +15,7 @@ import 'features/gamification/presentation/bloc/gamification_bloc.dart';
 
 import 'core/theme/theme_bloc.dart';
 import 'core/services/sound_service.dart';
+import 'core/services/alarm_service.dart';
 
 final sl = GetIt.instance;
 
@@ -25,6 +26,7 @@ Future<void> initDependencies() async {
 
   // ─── Services ───
   sl.registerLazySingleton(() => SoundService());
+  sl.registerLazySingleton(() => AlarmService());
 
   // ─── Theme ───
   sl.registerFactory(() => ThemeBloc());
