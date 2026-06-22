@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../core/widgets/neon_navbar.dart';
 import '../../core/widgets/confetti_overlay.dart';
@@ -32,10 +33,9 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _showAddTask(BuildContext ctx) {
-    showModalBottomSheet(
+    shadcn.openDrawer(
       context: ctx,
-      isScrollControlled: true,
-      useSafeArea: true,
+      position: shadcn.OverlayPosition.bottom,
       builder: (_) => MultiBlocProvider(
         providers: [
           BlocProvider.value(value: ctx.read<TaskBloc>()),
@@ -64,37 +64,44 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Main content — IndexedStack keeps each page alive
-          IndexedStack(
-            index: _currentIndex,
-            children: List.generate(3, (i) => _buildPage(i)),
-          ),
+    return shadcn.DrawerOverlay(
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: Stack(
+              children: [
+                // Main content — IndexedStack keeps each page alive
+                IndexedStack(
+                  index: _currentIndex,
+                  children: List.generate(3, (i) => _buildPage(i)),
+                ),
 
-          // Confetti overlay (only on home tab)
-          if (_currentIndex == 0)
-            ConfettiOverlay(
-              play: _showConfetti,
-              onComplete: () => setState(() => _showConfetti = false),
+                // Confetti overlay (only on home tab)
+                if (_currentIndex == 0)
+                  ConfettiOverlay(
+                    play: _showConfetti,
+                    onComplete: () => setState(() => _showConfetti = false),
+                  ),
+              ],
             ),
-        ],
-      ),
 
-      // FAB only on Home tab
-      floatingActionButton: _currentIndex == 0
-          ? _buildFAB(context)
-          : null,
+            // FAB only on Home tab
+            floatingActionButton: _currentIndex == 0
+                ? _buildFAB(context)
+                : null,
 
-      bottomNavigationBar: NeonNavBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+            bottomNavigationBar: NeonNavBar(
+              currentIndex: _currentIndex,
+              onTap: (i) => setState(() => _currentIndex = i),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildFAB(BuildContext context) {
+    final theme = Theme.of(context);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 600),
@@ -102,12 +109,25 @@ class _MainShellState extends State<MainShell> {
       builder: (context, value, _) {
         return Transform.scale(
           scale: value,
-          child: FloatingActionButton(
-            heroTag: 'main_fab',
-            onPressed: () => _showAddTask(context),
-            tooltip: 'Add a task, bestie!',
-            elevation: 8,
-            child: const Icon(Icons.add_rounded, size: 28),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: shadcn.Button(
+              style: const shadcn.ButtonStyle.primary(
+                shape: shadcn.ButtonShape.circle,
+              ),
+              onPressed: () => _showAddTask(context),
+              child: const Icon(Icons.add_rounded, size: 28),
+            ),
           ),
         );
       },

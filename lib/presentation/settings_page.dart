@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
@@ -19,164 +20,168 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _dailyReminders = true;
   bool _urgentAlarms = true;
   String _notificationSound = 'Soft Chime';
-  String _fontStyle = 'Playfair Display';
 
   static const _soundOptions = ['Soft Chime', 'Gentle Bell', 'Sparkle', 'None'];
-  static const _fontOptions = ['Playfair Display', 'Nunito', 'Dancing Script'];
-
-  // Theme color choices (accent colors beyond primary)
-  static const _themeColors = [
-    Color(0xFFE8A0BF), // Rose Pink
-    Color(0xFFB8CCE3), // Baby Blue
-    Color(0xFFD4C5F9), // Lavender
-    Color(0xFFC9A96E), // Antique Gold
-  ];
-
-  int _selectedColorIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
-    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textHint = isDark ? AppColors.textHintDark : AppColors.textHintLight;
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final isDark = themeState.isDarkMode;
+        final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+        final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+        final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+        final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+        final textHint = isDark ? AppColors.textHintDark : AppColors.textHintLight;
 
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // ─── Title ───
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 24, 0, 4),
-                child: Center(
-                  child: Text(
-                    'Settings',
-                    style: AppTypography.h1(color: textPrimary),
+        return Scaffold(
+          backgroundColor: bg,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                // ─── Title ───
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 24, 0, 4),
+                    child: Center(
+                      child: Text(
+                        'Settings',
+                        style: AppTypography.h1(color: textPrimary),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            // ─── Appearance Section ───
-            SliverToBoxAdapter(
-              child: _buildSection(
-                surface: surface,
-                primary: primary,
-                children: [
-                  // Dark mode toggle
-                  _buildToggleRow(
-                    icon: Icons.nightlight_round,
-                    label: 'Midnight Coquette',
-                    value: isDark,
-                    textPrimary: textPrimary,
-                    primary: primary,
-                    onChanged: (_) {
-                      context.read<ThemeBloc>().add(ToggleTheme());
-                    },
-                  ),
-
-                  _buildDivider(textHint),
-
-                  // Theme color picker
-                  _buildColorPickerRow(
-                    textPrimary: textPrimary,
-                    textHint: textHint,
-                    primary: primary,
-                  ),
-
-                  _buildDivider(textHint),
-
-                  // Font style
-                  _buildDropdownRow(
-                    icon: Icons.text_fields_rounded,
-                    label: 'Font Style',
-                    value: _fontStyle,
-                    options: _fontOptions,
-                    textPrimary: textPrimary,
-                    textHint: textHint,
-                    primary: primary,
+                // ─── Appearance Section ───
+                SliverToBoxAdapter(
+                  child: _buildSection(
                     surface: surface,
-                    onChanged: (v) => setState(() => _fontStyle = v!),
-                  ),
-                ],
-              ),
-            ),
-
-            // ─── Bow Divider ───
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                child: BowDivider(),
-              ),
-            ),
-
-            // ─── Notifications Section ───
-            SliverToBoxAdapter(
-              child: _buildSection(
-                surface: surface,
-                primary: primary,
-                children: [
-                  // Daily reminders
-                  _buildToggleRow(
-                    icon: Icons.notifications_rounded,
-                    label: 'Daily Reminders',
-                    value: _dailyReminders,
-                    textPrimary: textPrimary,
                     primary: primary,
-                    onChanged: (v) => setState(() => _dailyReminders = v),
-                  ),
+                    children: [
+                      // Dark mode toggle
+                      _buildToggleRow(
+                        icon: Icons.nightlight_round,
+                        label: 'Midnight Coquette',
+                        value: isDark,
+                        textPrimary: textPrimary,
+                        primary: primary,
+                        onChanged: (_) {
+                          context.read<ThemeBloc>().add(ToggleTheme());
+                        },
+                      ),
 
-                  _buildDivider(textHint),
+                      _buildDivider(textHint),
 
-                  // Urgent alarms
-                  _buildToggleRow(
-                    icon: Icons.priority_high_rounded,
-                    label: 'Urgent Alarms',
-                    subtitle: 'For high priority tasks, bestie!',
-                    value: _urgentAlarms,
-                    textPrimary: textPrimary,
-                    textHint: textHint,
-                    primary: primary,
-                    onChanged: (v) => setState(() => _urgentAlarms = v),
-                  ),
+                      // Theme color picker
+                      _buildColorPickerRow(
+                        textPrimary: textPrimary,
+                        textHint: textHint,
+                        primary: primary,
+                        selectedColorIndex: themeState.colorIndex,
+                        onColorSelected: (idx) {
+                          context.read<ThemeBloc>().add(ChangeThemeColor(idx));
+                        },
+                      ),
 
-                  _buildDivider(textHint),
+                      _buildDivider(textHint),
 
-                  // Notification sound
-                  _buildDropdownRow(
-                    icon: Icons.music_note_rounded,
-                    label: 'Notification Sound',
-                    value: _notificationSound,
-                    options: _soundOptions,
-                    textPrimary: textPrimary,
-                    textHint: textHint,
-                    primary: primary,
-                    surface: surface,
-                    onChanged: (v) => setState(() => _notificationSound = v!),
-                  ),
-                ],
-              ),
-            ),
-
-            // ─── Version info ───
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24, bottom: 100),
-                child: Center(
-                  child: Text(
-                    '🎀 Workaholic v1.0.0',
-                    style: AppTypography.caption(color: textHint),
+                      // Font style
+                      _buildDropdownRow(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Font Style',
+                        value: themeState.fontFamily,
+                        options: ThemeBloc.fontFamilies,
+                        textPrimary: textPrimary,
+                        textHint: textHint,
+                        primary: primary,
+                        surface: surface,
+                        onChanged: (v) {
+                          if (v != null) {
+                            context.read<ThemeBloc>().add(ChangeFontStyle(v));
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                // ─── Bow Divider ───
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+                    child: BowDivider(),
+                  ),
+                ),
+
+                // ─── Notifications Section ───
+                SliverToBoxAdapter(
+                  child: _buildSection(
+                    surface: surface,
+                    primary: primary,
+                    children: [
+                      // Daily reminders
+                      _buildToggleRow(
+                        icon: Icons.notifications_rounded,
+                        label: 'Daily Reminders',
+                        value: _dailyReminders,
+                        textPrimary: textPrimary,
+                        primary: primary,
+                        onChanged: (v) => setState(() => _dailyReminders = v),
+                      ),
+
+                      _buildDivider(textHint),
+
+                      // Urgent alarms
+                      _buildToggleRow(
+                        icon: Icons.priority_high_rounded,
+                        label: 'Urgent Alarms',
+                        subtitle: 'For high priority tasks, bestie!',
+                        value: _urgentAlarms,
+                        textPrimary: textPrimary,
+                        textHint: textHint,
+                        primary: primary,
+                        onChanged: (v) => setState(() => _urgentAlarms = v),
+                      ),
+
+                      _buildDivider(textHint),
+
+                      // Notification sound
+                      _buildDropdownRow(
+                        icon: Icons.music_note_rounded,
+                        label: 'Notification Sound',
+                        value: _notificationSound,
+                        options: _soundOptions,
+                        textPrimary: textPrimary,
+                        textHint: textHint,
+                        primary: primary,
+                        surface: surface,
+                        onChanged: (v) {
+                          if (v != null) {
+                            setState(() => _notificationSound = v);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ─── Version info ───
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24, bottom: 100),
+                    child: Center(
+                      child: Text(
+                        '🎀 Workaholic v1.0.0',
+                        style: AppTypography.caption(color: textHint),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -246,10 +251,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          Switch.adaptive(
+          shadcn.Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: primary,
           ),
         ],
       ),
@@ -260,6 +264,8 @@ class _SettingsPageState extends State<SettingsPage> {
     required Color textPrimary,
     required Color textHint,
     required Color primary,
+    required int selectedColorIndex,
+    required ValueChanged<int> onColorSelected,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -281,10 +287,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           // Color circles
           Row(
-            children: List.generate(_themeColors.length, (i) {
-              final isSelected = _selectedColorIndex == i;
+            children: List.generate(ThemeBloc.themeColors.length, (i) {
+              final isSelected = selectedColorIndex == i;
               return GestureDetector(
-                onTap: () => setState(() => _selectedColorIndex = i),
+                onTap: () => onColorSelected(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(left: 8),
@@ -292,7 +298,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   height: isSelected ? 28 : 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _themeColors[i],
+                    color: ThemeBloc.themeColors[i],
                     border: isSelected
                         ? Border.all(
                             color: Colors.white,
@@ -302,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: _themeColors[i].withValues(alpha: 0.50),
+                              color: ThemeBloc.themeColors[i].withValues(alpha: 0.50),
                               blurRadius: 8,
                               spreadRadius: 1,
                             ),
@@ -349,32 +355,19 @@ class _SettingsPageState extends State<SettingsPage> {
           Expanded(
             child: Text(label, style: AppTypography.body(color: textPrimary)),
           ),
-          // Dropdown button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: primary.withValues(alpha: 0.20),
-              ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: value,
-                isDense: true,
-                icon: Icon(Icons.expand_more_rounded,
-                    color: primary, size: 18),
-                dropdownColor: surface,
-                style: AppTypography.small(color: primary),
-                items: options.map((opt) {
-                  return DropdownMenuItem(
+          // Dropdown button -> shadcn Select
+          shadcn.Select<String>(
+            value: value,
+            onChanged: onChanged,
+            itemBuilder: (context, val) => Text(val, style: AppTypography.small(color: textPrimary)),
+            popup: (context) => shadcn.SelectPopup(
+              items: shadcn.SelectItemList(
+                children: options.map((opt) {
+                  return shadcn.SelectItemButton(
                     value: opt,
-                    child: Text(opt,
-                        style: AppTypography.small(color: textPrimary)),
+                    child: Text(opt, style: AppTypography.small(color: textPrimary)),
                   );
                 }).toList(),
-                onChanged: onChanged,
               ),
             ),
           ),

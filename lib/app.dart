@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import 'injection_container.dart';
 import 'main.dart' show navigatorKey;
 import 'core/theme/theme_bloc.dart';
+import 'core/theme/shadcn_theme.dart';
 import 'core/widgets/permission_onboarding_dialog.dart';
 import 'features/task/presentation/bloc/task_bloc.dart';
 import 'features/category/presentation/bloc/category_bloc.dart';
 import 'features/gamification/presentation/bloc/gamification_bloc.dart';
 import 'features/alarm/alarm_page.dart';
 import 'presentation/main_shell.dart';
+
+import 'core/constants/app_colors.dart';
 
 class WorkaholicApp extends StatefulWidget {
   /// If the app was cold-started by tapping an alarm notification,
@@ -39,11 +43,37 @@ class _WorkaholicAppState extends State<WorkaholicApp> {
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
-          return MaterialApp(
+          final isDark = themeState.isDarkMode;
+          final primaryColor = ThemeBloc.themeColors[themeState.colorIndex];
+          final shadcnScheme = isDark
+              ? shadcn.ColorSchemes.darkZinc.copyWith(
+                  primary: () => primaryColor,
+                  primaryForeground: () => Colors.white,
+                )
+              : shadcn.ColorSchemes.lightZinc.copyWith(
+                  primary: () => primaryColor,
+                  primaryForeground: () => Colors.white,
+                );
+
+          return shadcn.ShadcnApp(
             title: 'Workaholic',
             debugShowCheckedModeBanner: false,
-            theme: themeState.themeData,
+            // shadcn theme (for shadcn components)
+            theme: isDark
+                ? ShadcnCoquetteTheme.dark(colorSchemeOverride: shadcnScheme)
+                : ShadcnCoquetteTheme.light(colorSchemeOverride: shadcnScheme),
+            // Material theme (for backward-compat with Material widgets)
+            materialTheme: themeState.themeData,
             navigatorKey: navigatorKey,
+            builder: (context, child) {
+              return shadcn.ComponentTheme<shadcn.SwitchTheme>(
+                data: shadcn.SwitchTheme(
+                  inactiveThumbColor: isDark ? AppColors.textHintDark : AppColors.textHintLight,
+                  inactiveColor: isDark ? AppColors.creamDark : AppColors.creamLight,
+                ),
+                child: child!,
+              );
+            },
             home: _AppHome(
               coldStartAlarmTaskId: widget.coldStartAlarmTaskId,
               coldStartAlarmTitle: widget.coldStartAlarmTitle,

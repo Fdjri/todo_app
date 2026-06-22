@@ -6,13 +6,29 @@ import '../constants/app_typography.dart';
 class DarkCoquetteTheme {
   DarkCoquetteTheme._();
 
-  static ThemeData get darkTheme {
+  static ThemeData darkTheme({
+    Color? primaryOverride,
+    String? fontFamily,
+  }) {
+    if (fontFamily != null) {
+      AppTypography.setHeadingFamily(fontFamily);
+    }
+
+    final primary = primaryOverride ?? AppColors.primaryDark;
+    // Derive darker blush
+    final blush = HSLColor.fromColor(primary)
+        .withLightness(
+            (HSLColor.fromColor(primary).lightness - 0.15).clamp(0.15, 0.5))
+        .withSaturation(
+            (HSLColor.fromColor(primary).saturation * 0.5).clamp(0.0, 1.0))
+        .toColor();
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primaryDark,
-        primaryContainer: AppColors.blushDark,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        primaryContainer: blush,
         secondary: AppColors.goldAccentDark,
         secondaryContainer: AppColors.creamDark,
         surface: AppColors.surfaceDark,
@@ -21,7 +37,7 @@ class DarkCoquetteTheme {
         onSecondary: AppColors.textPrimaryDark,
         onSurface: AppColors.textPrimaryDark,
         onError: AppColors.textPrimaryDark,
-        outline: AppColors.blushDark,
+        outline: blush,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
       textTheme: AppTypography.textTheme(
@@ -40,12 +56,13 @@ class DarkCoquetteTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: AppColors.blushDark.withValues(alpha: 0.5), width: 1),
+          side: BorderSide(
+              color: blush.withValues(alpha: 0.5), width: 1),
         ),
-        shadowColor: AppColors.primaryDark.withValues(alpha: 0.2),
+        shadowColor: primary.withValues(alpha: 0.2),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: primary,
         foregroundColor: AppColors.textPrimaryDark,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -55,35 +72,40 @@ class DarkCoquetteTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.blushDark.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+              color: blush.withValues(alpha: 0.5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.blushDark.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+              color: blush.withValues(alpha: 0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         hintStyle: AppTypography.body(color: AppColors.textHintDark),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceDark,
-        selectedColor: AppColors.primaryDark,
+        selectedColor: primary,
         labelStyle: AppTypography.small(color: AppColors.textBodyDark),
-        secondaryLabelStyle: AppTypography.small(color: AppColors.textPrimaryDark),
+        secondaryLabelStyle:
+            AppTypography.small(color: AppColors.textPrimaryDark),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
-          side: BorderSide(color: AppColors.blushDark.withValues(alpha: 0.5)),
+          side: BorderSide(
+              color: blush.withValues(alpha: 0.5)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surfaceDark,
-        selectedItemColor: AppColors.primaryDark,
+        selectedItemColor: primary,
         unselectedItemColor: AppColors.textHintDark,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -102,25 +124,22 @@ class DarkCoquetteTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryDark;
-          }
+          if (states.contains(WidgetState.selected)) return primary;
           return AppColors.textHintDark;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.blushDark;
-          }
+          if (states.contains(WidgetState.selected)) return blush;
           return AppColors.creamDark;
         }),
       ),
       dividerTheme: DividerThemeData(
-        color: AppColors.blushDark.withValues(alpha: 0.5),
+        color: blush.withValues(alpha: 0.5),
         thickness: 1,
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceDark,
-        contentTextStyle: AppTypography.body(color: AppColors.textPrimaryDark),
+        contentTextStyle:
+            AppTypography.body(color: AppColors.textPrimaryDark),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),

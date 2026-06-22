@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Coquette typography using Playfair Display, Nunito, and Dancing Script
+/// Coquette typography with swappable heading font family.
+/// The body font is always Nunito; the heading/accent font can be changed.
 class AppTypography {
   AppTypography._();
 
+  /// Current heading font family — changed via Settings
+  static String _headingFamily = 'Playfair Display';
+
+  /// Update the heading font family globally.
+  static void setHeadingFamily(String family) {
+    _headingFamily = family;
+  }
+
   // ─── Font Families ───
-  static TextStyle get _playfair => GoogleFonts.playfairDisplay();
+  static TextStyle get _heading {
+    switch (_headingFamily) {
+      case 'Nunito':
+        return GoogleFonts.nunito();
+      case 'Dancing Script':
+        return GoogleFonts.dancingScript();
+      case 'Playfair Display':
+      default:
+        return GoogleFonts.playfairDisplay();
+    }
+  }
+
   static TextStyle get _nunito => GoogleFonts.nunito();
   static TextStyle get _dancingScript => GoogleFonts.dancingScript();
 
   // ─── Display ───
-  static TextStyle display({Color? color}) => _playfair.copyWith(
+  static TextStyle display({Color? color}) => _heading.copyWith(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         height: 1.3,
@@ -19,14 +39,14 @@ class AppTypography {
       );
 
   // ─── Headings ───
-  static TextStyle h1({Color? color}) => _playfair.copyWith(
+  static TextStyle h1({Color? color}) => _heading.copyWith(
         fontSize: 24,
         fontWeight: FontWeight.w700,
         height: 1.3,
         color: color,
       );
 
-  static TextStyle h2({Color? color}) => _playfair.copyWith(
+  static TextStyle h2({Color? color}) => _heading.copyWith(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.3,
@@ -87,7 +107,8 @@ class AppTypography {
       );
 
   // ─── TextTheme for ThemeData ───
-  static TextTheme textTheme({required Color primaryColor, required Color bodyColor}) {
+  static TextTheme textTheme(
+      {required Color primaryColor, required Color bodyColor}) {
     return TextTheme(
       displayLarge: display(color: primaryColor),
       headlineLarge: h1(color: primaryColor),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -49,10 +50,11 @@ class TaskDetailPage extends StatelessWidget {
             title: Text('Task Details',
                 style: AppTypography.h2(color: theme.colorScheme.primary)),
             actions: [
-              IconButton(
-                icon: Icon(Icons.delete_rounded,
-                    color: theme.colorScheme.error),
+              // shadcn Button.ghost variant destructive for delete
+              shadcn.Button.ghost(
                 onPressed: () => _showDeleteDialog(context, currentTask),
+                child: Icon(Icons.delete_rounded,
+                    color: theme.colorScheme.error),
               ),
             ],
           ),
@@ -180,16 +182,11 @@ class TaskDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Progress bar
+                  // Progress bar — shadcn LinearProgressIndicator
                   ClipRRect(
                     borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
+                    child: shadcn.LinearProgressIndicator(
                       value: currentTask.subTaskProgress,
-                      minHeight: 6,
-                      backgroundColor:
-                          isDark ? AppColors.blushDark : AppColors.blushLight,
-                      valueColor:
-                          AlwaysStoppedAnimation(theme.colorScheme.primary),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -323,22 +320,21 @@ class TaskDetailPage extends StatelessWidget {
             style: AppTypography.body(color: theme.textTheme.bodyMedium?.color),
           ),
           actions: [
-            TextButton(
+            // shadcn Button.outline for cancel
+            shadcn.Button.outline(
               onPressed: () => Navigator.pop(dialogContext),
               child: Text('Cancel',
                   style: AppTypography.bodyBold(
                       color: theme.colorScheme.onSurface)),
             ),
-            FilledButton(
+            // shadcn Button.destructive for delete
+            shadcn.Button.destructive(
               onPressed: () {
                 context.read<TaskBloc>().add(DeleteTask(task.id));
                 sl<SoundService>().playDelete();
                 Navigator.pop(dialogContext);
                 Navigator.pop(context);
               },
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-              ),
               child: Text('Delete',
                   style: AppTypography.bodyBold(
                       color: theme.colorScheme.onError)),

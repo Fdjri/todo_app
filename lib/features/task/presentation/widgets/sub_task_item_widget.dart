@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/widgets/pearl_checkbox.dart';
 import '../../domain/entities/task_entity.dart';
@@ -42,16 +43,16 @@ class SubTaskItemWidget extends StatelessWidget {
             ),
           ),
           if (onDelete != null)
-            IconButton(
+            shadcn.Button(
+              style: const shadcn.ButtonStyle.ghost(
+                size: shadcn.ButtonSize.xSmall,
+              ),
               onPressed: onDelete,
-              icon: Icon(
+              child: Icon(
                 Icons.close_rounded,
                 size: 16,
                 color: theme.textTheme.bodySmall?.color,
               ),
-              iconSize: 16,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
             ),
         ],
       ),

@@ -1,357 +1,180 @@
-# 🎀 Workaholic — Coquette To-Do List App Implementation
+# Migrasi Penuh Material → shadcn_flutter + Settings Fungsional
 
-> Build a playful coquette-themed to-do list Flutter app with Clean Architecture, BLoC state management, Lottie animations, dark theme, and sound effects.
-
----
-
-## Background & Context
-
-The project has two existing design documents:
-- [implementation_plan.md](file:///d:/Private/Firly/workaholic/implementation_plan.md) — Full PRD with features, data models, and architecture
-- [design_system.md](file:///d:/Private/Firly/workaholic/design_system.md) — Visual design specs (colors, typography, components, layouts)
-
-### Key Changes from Original Plan
-The user has requested the following modifications:
-
-| Original Plan | User's Request |
-|---------------|----------------|
-| Shadcn UI (`ShadApp`) | **MaterialApp** (standard Flutter) |
-| Riverpod or BLoC (open question) | **Flutter BLoC** (confirmed) |
-| `flutter_animate` (code-based) | **Lottie** (pre-designed JSON animations) |
-| Dark mode (open question) | **Dark theme** (confirmed, must include) |
-| Sound effects (open question) | **Sound effects** (confirmed, `audioplayers`) |
-| Manual directory creation | **fca-cli** for clean architecture scaffolding |
-
-> [!IMPORTANT]
-> Since the user chose **Flutter BLoC** + **Lottie** + **Dark theme** + **Sound effects**, these override the original plan's open questions. We also drop `shadcn_ui` and use standard **MaterialApp** with custom coquette theming, since Lottie and BLoC work seamlessly with Material.
+Migrasi **seluruh** komponen Material yang digunakan secara eksplisit di codebase ke komponen shadcn_flutter, sekaligus membuat Theme Selection dan Font Style di Settings benar-benar berfungsi.
 
 ---
 
-## Phase 1: Project Scaffolding with fca-cli
+## 1. Dependencies & App Root
 
-Use `npx fca-cli@latest` to scaffold the clean architecture features:
+#### [MODIFY] [pubspec.yaml](file:///D:/Private/Firly/workaholic/pubspec.yaml)
+- Tambah `shadcn_flutter: ^0.0.52`
 
-```bash
-# Scaffold 4 features
-npx fca-cli@latest add-feature task
-npx fca-cli@latest add-feature category
-npx fca-cli@latest add-feature notification
-npx fca-cli@latest add-feature gamification
-```
+#### [MODIFY] [app.dart](file:///D:/Private/Firly/workaholic/lib/app.dart)
+- `MaterialApp` → `ShadcnApp`
+- Pass `materialTheme:` (existing Material ThemeData, untuk backward compat)
+- Pass `theme:` (shadcn ThemeData Coquette)
+- `navigatorKey:` tetap dipertahankan
 
-Then add specific components within each feature:
-
-### Task Feature
-```bash
-npx fca-cli@latest add-entity task task
-npx fca-cli@latest add-entity task sub_task
-npx fca-cli@latest add-model task task
-npx fca-cli@latest add-model task sub_task
-npx fca-cli@latest add-data-source task task_local
-npx fca-cli@latest add-repository task task
-npx fca-cli@latest add-use-case task get_all_tasks task
-npx fca-cli@latest add-use-case task add_task task
-npx fca-cli@latest add-use-case task update_task task
-npx fca-cli@latest add-use-case task delete_task task
-npx fca-cli@latest add-use-case task toggle_task_completion task
-npx fca-cli@latest add-use-case task toggle_subtask_completion task
-npx fca-cli@latest add-use-case task get_tasks_by_category task
-npx fca-cli@latest add-bloc task task
-npx fca-cli@latest add-page task home
-npx fca-cli@latest add-page task task_detail
-npx fca-cli@latest add-page task add_task
-npx fca-cli@latest add-widget task task_card
-npx fca-cli@latest add-widget task task_list
-npx fca-cli@latest add-widget task sub_task_item
-npx fca-cli@latest add-widget task priority_selector
-npx fca-cli@latest add-widget task quick_add_fab
-npx fca-cli@latest add-widget task category_filter_bar
-```
-
-### Category Feature
-```bash
-npx fca-cli@latest add-entity category category
-npx fca-cli@latest add-model category category
-npx fca-cli@latest add-data-source category category_local
-npx fca-cli@latest add-repository category category
-npx fca-cli@latest add-use-case category get_all_categories category
-npx fca-cli@latest add-use-case category add_category category
-npx fca-cli@latest add-use-case category delete_category category
-npx fca-cli@latest add-bloc category category
-npx fca-cli@latest add-widget category category_chip
-npx fca-cli@latest add-widget category category_picker_sheet
-```
-
-### Notification Feature
-```bash
-npx fca-cli@latest add-data-source notification notification_local
-npx fca-cli@latest add-repository notification notification
-npx fca-cli@latest add-use-case notification schedule_notification notification
-npx fca-cli@latest add-use-case notification cancel_notification notification
-npx fca-cli@latest add-use-case notification schedule_alarm notification
-npx fca-cli@latest add-bloc notification notification
-npx fca-cli@latest add-page notification alarm_screen
-```
-
-### Gamification Feature
-```bash
-npx fca-cli@latest add-entity gamification streak
-npx fca-cli@latest add-entity gamification achievement
-npx fca-cli@latest add-entity gamification user_stats
-npx fca-cli@latest add-model gamification streak
-npx fca-cli@latest add-model gamification achievement
-npx fca-cli@latest add-model gamification user_stats
-npx fca-cli@latest add-data-source gamification gamification_local
-npx fca-cli@latest add-repository gamification gamification
-npx fca-cli@latest add-use-case gamification get_current_streak gamification
-npx fca-cli@latest add-use-case gamification update_streak gamification
-npx fca-cli@latest add-use-case gamification add_xp gamification
-npx fca-cli@latest add-use-case gamification get_user_level gamification
-npx fca-cli@latest add-use-case gamification check_achievements gamification
-npx fca-cli@latest add-bloc gamification gamification
-npx fca-cli@latest add-widget gamification streak_counter
-npx fca-cli@latest add-widget gamification level_badge
-npx fca-cli@latest add-widget gamification achievement_card
-npx fca-cli@latest add-widget gamification xp_progress_bar
-```
+#### [NEW] [shadcn_theme.dart](file:///D:/Private/Firly/workaholic/lib/core/theme/shadcn_theme.dart)
+- Helper untuk membuat `shadcn_flutter.ThemeData` yang cocok dengan palette Coquette (light + dark)
+- Map warna Coquette ke color scheme shadcn
 
 ---
 
-## Phase 2: Dependencies (pubspec.yaml)
+## 2. ThemeBloc — Support Theme Color + Font Style (Fungsional)
 
-### [MODIFY] [pubspec.yaml](file:///d:/Private/Firly/workaholic/pubspec.yaml)
+#### [MODIFY] [theme_bloc.dart](file:///D:/Private/Firly/workaholic/lib/core/theme/theme_bloc.dart)
+- Tambah event `ChangeThemeColor(int colorIndex)` dan `ChangeFontStyle(String fontFamily)`
+- State `ThemeState` menyimpan `colorIndex`, `fontFamily`, `isDarkMode`
+- Simpan ke SharedPreferences agar persisten antar restart
 
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
+#### [MODIFY] [coquette_theme.dart](file:///D:/Private/Firly/workaholic/lib/core/theme/coquette_theme.dart)
+- Refactor `lightTheme` → `lightTheme({Color? primaryOverride, String? fontFamily})`
+- Generate ThemeData berdasarkan warna dan font pilihan user
 
-  # State Management
-  flutter_bloc: ^9.0.0
-  equatable: ^2.0.7
+#### [MODIFY] [dark_theme.dart](file:///D:/Private/Firly/workaholic/lib/core/theme/dark_theme.dart)
+- Sama: refactor menjadi method dengan parameter
 
-  # Local Storage
-  shared_preferences: ^2.3.0
-
-  # Dependency Injection
-  get_it: ^8.0.0
-
-  # Notifications
-  flutter_local_notifications: ^18.0.0
-  android_alarm_manager_plus: ^4.0.0
-  timezone: ^0.10.0
-  permission_handler: ^11.0.0
-
-  # Animations (Lottie)
-  lottie: ^3.3.1
-
-  # Sound Effects
-  audioplayers: ^6.1.0
-
-  # Utilities
-  uuid: ^4.0.0
-  intl: ^0.19.0
-
-  # Fonts
-  google_fonts: ^6.2.0
-
-  # Home Screen Widget
-  home_widget: ^0.7.0
-```
-
-### Assets Setup
-
-```yaml
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/lottie/
-    - assets/sounds/
-    - assets/images/
-```
-
-Lottie animation files to include:
-- `confetti.json` — Task completion celebration
-- `sparkle.json` — Level up / achievement unlock
-- `bow_loading.json` — Loading indicator
-- `empty_state.json` — Cute empty state animation
-- `alarm_pulse.json` — Alarm screen pulsing
-
-Sound effect files:
-- `task_complete.mp3` — Soft satisfying chime
-- `level_up.mp3` — Achievement fanfare
-- `button_tap.mp3` — Subtle tap feedback
-- `delete.mp3` — Soft swoosh for deletion
+#### [MODIFY] [app_typography.dart](file:///D:/Private/Firly/workaholic/lib/core/constants/app_typography.dart)
+- Refactor agar font family bisa di-swap (`Playfair Display` / `Nunito` / `Dancing Script`)
 
 ---
 
-## Phase 3: Core Layer
+## 3. Komponen per File — Migrasi Material → shadcn
 
-### [NEW] `lib/core/constants/app_colors.dart`
-Coquette color palette with **both light and dark mode** tokens as specified in design system:
-- Light: Rose Pink `#E8A0BF`, Warm White `#FFF8F9`, Gold `#C9A96E`, etc.
-- Dark (Midnight Coquette): `#1A1118`, `#241920`, `#D4789C`, etc.
+### Halaman & Shell
 
-### [NEW] `lib/core/constants/app_typography.dart`
-Google Fonts: `Playfair Display`, `Nunito`, `Dancing Script` with the full type scale from design system.
+#### [MODIFY] [main_shell.dart](file:///D:/Private/Firly/workaholic/lib/presentation/main_shell.dart)
+| Material | → shadcn |
+|---|---|
+| `Scaffold` | `Scaffold` dari shadcn (atau tetap Material jika shadcn belum punya) |
+| `FloatingActionButton` | shadcn `Button` variant primary + custom shape |
+| `showModalBottomSheet` | shadcn `showSheet` / `Sheet` |
 
-### [NEW] `lib/core/constants/app_strings.dart`
-Motivational quotes pool, UI string constants, category defaults.
+#### [MODIFY] [home_page.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/pages/home_page.dart)
+| Material | → shadcn |
+|---|---|
+| `ScaffoldMessenger.showSnackBar` + `SnackBar` | shadcn `showToast` / `Toast` |
+| `FilterChip` | shadcn `Toggle` / `Chip` |
+| `IconButton` | shadcn `IconButton` / `Button.icon` |
+| `LinearProgressIndicator` | shadcn `Progress` |
 
-### [NEW] `lib/core/constants/app_assets.dart`
-Centralized paths for Lottie files, sound files, images.
+#### [MODIFY] [task_detail_page.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/pages/task_detail_page.dart)
+| Material | → shadcn |
+|---|---|
+| `Scaffold` + `AppBar` | shadcn `Scaffold` / `AppBar` (atau wrapper) |
+| `IconButton` (delete) | shadcn `Button.icon` variant destructive |
+| `AlertDialog` + `showDialog` | shadcn `showDialog` / `AlertDialog` |
+| `TextButton` | shadcn `Button` variant outline |
+| `FilledButton` | shadcn `Button` variant destructive |
+| `LinearProgressIndicator` | shadcn `Progress` |
 
-### [NEW] `lib/core/theme/coquette_theme.dart`
-Full `ThemeData` for light mode with coquette colors, custom `ColorScheme`, input decorations, card themes.
+#### [MODIFY] [add_task_page.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/pages/add_task_page.dart)
+| Material | → shadcn |
+|---|---|
+| `TextField` (×3) | shadcn `TextField` |
+| `DropdownButton<String>` (category) | shadcn `Select<String>` |
+| `DropdownButton<TaskPriority>` (priority) | shadcn `Select<TaskPriority>` |
+| `Switch` (alarm) | shadcn `Switch` |
+| `ActionChip` (date shortcuts) | shadcn `Chip` / `Toggle` |
+| `FilledButton` (submit) | shadcn `Button` variant primary |
+| `IconButton` (add subtask) | shadcn `Button.icon` |
 
-### [NEW] `lib/core/theme/dark_theme.dart`
-Full `ThemeData` for dark mode (Midnight Coquette — deep wine/burgundy tones).
+#### [MODIFY] [history_page.dart](file:///D:/Private/Firly/workaholic/lib/presentation/history_page.dart)
+| Material | → shadcn |
+|---|---|
+| `Scaffold` | shadcn Scaffold wrapper |
+| `showModalBottomSheet` | shadcn `showSheet` |
 
-### [NEW] `lib/core/theme/theme_bloc.dart`
-BLoC for toggling between light/dark themes.
+#### [MODIFY] [settings_page.dart](file:///D:/Private/Firly/workaholic/lib/presentation/settings_page.dart)
+| Material | → shadcn |
+|---|---|
+| `Scaffold` | shadcn Scaffold |
+| `Switch.adaptive` (×3) | shadcn `Switch` |
+| `DropdownButton<String>` (font, sound) | shadcn `Select<String>` |
+| `Divider` | shadcn `Separator` |
+| Theme color picker → **wire ke `ThemeBloc.add(ChangeThemeColor(i))`** |
+| Font style select → **wire ke `ThemeBloc.add(ChangeFontStyle(family))`** |
 
-### [NEW] `lib/core/services/sound_service.dart`
-Singleton service using `audioplayers` for playing sound effects on task completion, level up, etc.
+### Core Widgets
 
-### [NEW] `lib/core/widgets/`
-- `confetti_overlay.dart` — Lottie confetti animation overlay
-- `progress_ring.dart` — Animated circular progress with CustomPainter
-- `bow_divider.dart` — Decorative bow divider using CustomPaint
-- `empty_state.dart` — Lottie empty state with random motivational quotes
-- `mood_selector.dart` — Emoji mood picker
-- `pearl_checkbox.dart` — Custom coquette-style circular checkbox
-- `coquette_card.dart` — Styled card with lace border + pink shadows
+#### [MODIFY] [permission_onboarding_dialog.dart](file:///D:/Private/Firly/workaholic/lib/core/widgets/permission_onboarding_dialog.dart)
+| Material | → shadcn |
+|---|---|
+| `Dialog` | shadcn `AlertDialog` / `Dialog` |
+| `FilledButton` | shadcn `Button` variant primary |
+| `TextButton` | shadcn `Button` variant ghost |
+| `showDialog` | shadcn `showDialog` |
 
-### [NEW] `lib/core/utils/`
-- `date_formatter.dart` — Date/time formatting helpers
-- `id_generator.dart` — UUID generation
-- `json_helper.dart` — JSON encode/decode utilities
+#### [MODIFY] [coquette_card.dart](file:///D:/Private/Firly/workaholic/lib/core/widgets/coquette_card.dart)
+| Material | → shadcn |
+|---|---|
+| Custom card container | shadcn `Card` |
 
-### [NEW] `lib/core/errors/failures.dart`
-Failure/exception classes for clean architecture error handling.
+#### [MODIFY] [empty_state.dart](file:///D:/Private/Firly/workaholic/lib/core/widgets/empty_state.dart)
+- Ganti `Text` styling ke shadcn typography extensions jika applicable
 
----
+### Task Widgets
 
-## Phase 4: Feature Implementation
+#### [MODIFY] [task_card_widget.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/widgets/task_card_widget.dart)
+| Material | → shadcn |
+|---|---|
+| `LinearProgressIndicator` | shadcn `Progress` |
 
-### Task Feature (Core)
-Implement full CRUD with sub-tasks. Each file generated by fca-cli will be filled with:
+#### [MODIFY] [sub_task_item_widget.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/widgets/sub_task_item_widget.dart)
+| Material | → shadcn |
+|---|---|
+| `IconButton` (delete) | shadcn `Button.icon` variant ghost/destructive |
 
-- **Entities**: `TaskEntity` + `SubTaskEntity` with all fields from PRD
-- **Models**: JSON serialization for SharedPreferences
-- **DataSource**: SharedPreferences CRUD with JSON encoding
-- **Repository**: Abstract interface + implementation
-- **Use Cases**: 7 use cases (get all, add, update, delete, toggle, filter)
-- **BLoC**: `TaskBloc` with events/states for loading, CRUD, filtering, completion
-- **Pages**:
-  - `HomePage` — Main dashboard with greeting, progress ring, streak, category tabs, task list, FAB
-  - `AddTaskPage` — Bottom sheet form for creating tasks
-  - `TaskDetailPage` — Detail view with sub-tasks, edit, delete
-- **Widgets**: Task card (swipe gestures), task list, sub-task item, priority selector, quick-add FAB, category filter bar
+#### [MODIFY] [quick_add_fab_widget.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/widgets/quick_add_fab_widget.dart)
+| Material | → shadcn |
+|---|---|
+| `FloatingActionButton` | shadcn `Button` with circular shape |
 
-### Category Feature
-- **Entity/Model**: Category with emoji + color
-- **Pre-defined 8 categories** seeded on first launch
-- **Custom categories** with emoji and color picker
-- **BLoC**: Category loading, adding, deleting
+#### [MODIFY] [category_filter_bar_widget.dart](file:///D:/Private/Firly/workaholic/lib/features/task/presentation/widgets/category_filter_bar_widget.dart)
+| Material | → shadcn |
+|---|---|
+| Custom category chip | shadcn `Chip` / `Toggle` |
 
-### Notification Feature
-- **flutter_local_notifications** setup with 2 channels
-- **Schedule/cancel** notifications per task
-- **Alarm screen** full-screen notification for urgent tasks
-- **Custom notification sound** (soft chime)
+### Alarm Feature
 
-### Gamification Feature
-- **Streak tracking** (consecutive days)
-- **XP/Level system** (7 levels from Newbie to CEO Energy)
-- **Achievement badges** (milestones)
-- **BLoC**: Manages streaks, XP, level, achievements reactively
-- **Widgets**: Streak counter, level badge, achievement card, XP progress bar
-
----
-
-## Phase 5: App Shell & Routing
-
-### [MODIFY] [main.dart](file:///d:/Private/Firly/workaholic/lib/main.dart)
-Initialize: GetIt DI, notification service, timezone, sound service → run `MaterialApp`.
-
-### [NEW] `lib/app.dart`
-Root `MaterialApp` with:
-- BLoC providers for all features + theme
-- Coquette theme (light/dark based on ThemeBloc)
-- Route configuration
-
-### [NEW] `lib/injection_container.dart`
-GetIt setup registering all datasources, repos, use cases, and blocs.
-
-### [NEW] `lib/config/routes/app_router.dart`
-Named routes for all pages.
-
----
-
-## Phase 6: Lottie Animations
-
-Download/create Lottie JSON files for:
-1. **Confetti burst** — plays on task completion
-2. **Sparkle/star** — level up celebration
-3. **Empty box with bow** — empty state cute animation
-4. **Pulsing alarm** — alarm screen background
-5. **Loading bow** — loading indicator
-
-These will be stored in `assets/lottie/` and played via the `lottie` package with `LottieBuilder.asset()`.
+#### [MODIFY] [alarm_page.dart](file:///D:/Private/Firly/workaholic/lib/features/alarm/alarm_page.dart)
+| Material | → shadcn |
+|---|---|
+| `Scaffold` | shadcn Scaffold (atau tetap custom karena full-screen alarm) |
 
 ---
 
-## Phase 7: Sound Effects
+## 4. Komponen yang TETAP custom (tidak diganti)
 
-Using `audioplayers` package:
-- Generate simple sound effect placeholder files
-- `SoundService` singleton with methods: `playTaskComplete()`, `playLevelUp()`, `playButtonTap()`, `playDelete()`
-- Triggered from BLoC events or widget callbacks
-
----
-
-## Phase 8: Dark Theme
-
-- `ThemeBloc` with `ToggleThemeEvent` and states `LightThemeState` / `DarkThemeState`
-- Theme preference persisted in SharedPreferences
-- Settings page or toggle in home page header
-- Dark palette: Velvet Night `#1A1118`, Dark Plum `#241920`, Warm Rose `#D4789C`
+| Widget | Alasan |
+|---|---|
+| `PearlCheckbox` | Custom animated checkbox dengan TweenSequence bounce — tidak ada equivalent shadcn |
+| `BowDivider` | Custom divider dekoratif Coquette — bukan Divider standar |
+| `ProgressRing` | Custom painter circular — tidak ada equivalent shadcn |
+| `NeonNavBar` | Custom neon-glow bottom nav — tidak ada equivalent shadcn |
+| `ConfettiOverlay` | Custom Lottie animation — tidak ada equivalent shadcn |
 
 ---
 
 ## Verification Plan
 
-### Build & Run
-```bash
-flutter pub get
-flutter run
-```
-
-### Manual Verification
-1. Task CRUD — create, edit, complete, delete tasks
-2. Sub-tasks — individual completion, parent auto-complete
-3. Categories — filter, create custom, verify display
-4. Dark theme — toggle, verify all screens look correct
-5. Lottie animations — confetti on complete, empty state, loading
-6. Sound effects — chime on task complete, level up sound
-7. Gamification — streaks, XP, level, achievements
-8. Notifications — schedule, fire, alarm screen
-
 ### Automated Tests
 ```bash
-flutter test
+flutter analyze
 ```
+Harus clean (0 issues).
 
----
+### Manual Verification
+- ✅ Semua dropdown muncul sebagai shadcn Select (popover style)
+- ✅ Semua toggle muncul sebagai shadcn Switch
+- ✅ Dialog delete muncul sebagai shadcn AlertDialog
+- ✅ Snackbar muncul sebagai shadcn Toast
+- ✅ Buttons muncul sebagai shadcn Button variants
+- ✅ Ubah Theme Color di Settings → warna app berubah langsung
+- ✅ Ubah Font Style → font berubah di seluruh app
+- ✅ Toggle dark mode → masih bekerja
+- ✅ Restart app → semua settings tersimpan
 
-## Open Questions
-
-> [!IMPORTANT]
-> **Home Screen Widget**: The home widget requires native Android XML layouts + Kotlin code. Should we include this in the initial build, or defer to a later phase? It adds significant complexity.
-
-> [!NOTE]
-> **Lottie files**: For the Lottie animations, I'll create custom JSON files programmatically (simple particle/confetti effects). For more elaborate animations, you could later replace them with LottieFiles.com downloads.
-
-> [!NOTE]
-> **Sound files**: I'll generate minimal placeholder sound effects. You can later replace them with custom audio from freesound.org or similar.
+> [!WARNING]
+> Ini adalah perubahan besar yang menyentuh **hampir semua file UI** di project. Pastikan backup/commit dulu sebelum eksekusi.

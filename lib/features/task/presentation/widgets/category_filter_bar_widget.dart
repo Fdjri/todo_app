@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import '../../../../core/constants/app_typography.dart';
 import '../../../category/domain/entities/category_entity.dart';
 import '../../../category/presentation/bloc/category_bloc.dart';
-import '../../../category/presentation/widgets/category_chip_widget.dart';
 
-/// Horizontal category filter bar for the home page
+/// Horizontal category filter bar for the home page using shadcn
 class CategoryFilterBarWidget extends StatelessWidget {
   final String activeCategoryId;
   final ValueChanged<String> onCategorySelected;
@@ -34,43 +34,50 @@ class CategoryFilterBarWidget extends StatelessWidget {
               // "All" chip
               Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => onCategorySelected('all'),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: activeCategoryId == 'all'
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: activeCategoryId == 'all'
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline,
+                child: activeCategoryId == 'all'
+                    ? shadcn.Button(
+                        style: const shadcn.ButtonStyle.primary(
+                          size: shadcn.ButtonSize.small,
+                        ),
+                        onPressed: () => onCategorySelected('all'),
+                        child: Text('All ✨',
+                            style: AppTypography.small(
+                                color: theme.colorScheme.onPrimary)),
+                      )
+                    : shadcn.Button(
+                        style: const shadcn.ButtonStyle.outline(
+                          size: shadcn.ButtonSize.small,
+                        ),
+                        onPressed: () => onCategorySelected('all'),
+                        child: Text('All ✨',
+                            style: AppTypography.small(
+                                color: theme.colorScheme.onSurface)),
                       ),
-                    ),
-                    child: Text(
-                      'All ✨',
-                      style: AppTypography.small(
-                        color: activeCategoryId == 'all'
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
               ),
               // Category chips
               ...categories.map((cat) {
+                final isSelected = activeCategoryId == cat.id;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: CategoryChipWidget(
-                    category: cat,
-                    isSelected: activeCategoryId == cat.id,
-                    onTap: () => onCategorySelected(cat.id),
-                  ),
+                  child: isSelected
+                      ? shadcn.Button(
+                          style: const shadcn.ButtonStyle.primary(
+                            size: shadcn.ButtonSize.small,
+                          ),
+                          onPressed: () => onCategorySelected(cat.id),
+                          child: Text('${cat.emoji} ${cat.name}',
+                              style: AppTypography.small(
+                                  color: theme.colorScheme.onPrimary)),
+                        )
+                      : shadcn.Button(
+                          style: const shadcn.ButtonStyle.outline(
+                            size: shadcn.ButtonSize.small,
+                          ),
+                          onPressed: () => onCategorySelected(cat.id),
+                          child: Text('${cat.emoji} ${cat.name}',
+                              style: AppTypography.small(
+                                  color: theme.colorScheme.onSurface)),
+                        ),
                 );
               }),
             ],

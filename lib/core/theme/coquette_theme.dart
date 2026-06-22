@@ -6,13 +6,30 @@ import '../constants/app_typography.dart';
 class CoquetteTheme {
   CoquetteTheme._();
 
-  static ThemeData get lightTheme {
+  static ThemeData lightTheme({
+    Color? primaryOverride,
+    String? fontFamily,
+  }) {
+    // Apply font family if provided
+    if (fontFamily != null) {
+      AppTypography.setHeadingFamily(fontFamily);
+    }
+
+    final primary = primaryOverride ?? AppColors.primaryLight;
+    // Derive a lighter blush shade
+    final blush = HSLColor.fromColor(primary)
+        .withLightness(
+            (HSLColor.fromColor(primary).lightness + 0.15).clamp(0.0, 1.0))
+        .withSaturation(
+            (HSLColor.fromColor(primary).saturation * 0.6).clamp(0.0, 1.0))
+        .toColor();
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryLight,
-        primaryContainer: AppColors.blushLight,
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        primaryContainer: blush,
         secondary: AppColors.goldAccentLight,
         secondaryContainer: AppColors.creamLight,
         surface: AppColors.surfaceLight,
@@ -21,7 +38,7 @@ class CoquetteTheme {
         onSecondary: AppColors.textPrimaryLight,
         onSurface: AppColors.textPrimaryLight,
         onError: Colors.white,
-        outline: AppColors.blushLight,
+        outline: blush,
       ),
       scaffoldBackgroundColor: AppColors.backgroundLight,
       textTheme: AppTypography.textTheme(
@@ -40,12 +57,12 @@ class CoquetteTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.blushLight, width: 1),
+          side: BorderSide(color: blush, width: 1),
         ),
-        shadowColor: AppColors.primaryLight.withValues(alpha: 0.15),
+        shadowColor: primary.withValues(alpha: 0.15),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryLight,
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -55,35 +72,36 @@ class CoquetteTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceLight,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.blushLight),
+          borderSide: BorderSide(color: blush),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.blushLight),
+          borderSide: BorderSide(color: blush),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         hintStyle: AppTypography.body(color: AppColors.textHintLight),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceLight,
-        selectedColor: AppColors.primaryLight,
+        selectedColor: primary,
         labelStyle: AppTypography.small(color: AppColors.textBodyLight),
         secondaryLabelStyle: AppTypography.small(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
-          side: const BorderSide(color: AppColors.blushLight),
+          side: BorderSide(color: blush),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surfaceLight,
-        selectedItemColor: AppColors.primaryLight,
+        selectedItemColor: primary,
         unselectedItemColor: AppColors.textHintLight,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -102,20 +120,16 @@ class CoquetteTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryLight;
-          }
+          if (states.contains(WidgetState.selected)) return primary;
           return AppColors.textHintLight;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.blushLight;
-          }
+          if (states.contains(WidgetState.selected)) return blush;
           return AppColors.creamLight;
         }),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.blushLight,
+      dividerTheme: DividerThemeData(
+        color: blush,
         thickness: 1,
       ),
       snackBarTheme: SnackBarThemeData(

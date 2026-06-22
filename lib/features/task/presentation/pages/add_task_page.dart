@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -9,6 +10,7 @@ import '../../../category/domain/entities/category_entity.dart';
 import '../../../category/presentation/bloc/category_bloc.dart';
 import '../../domain/entities/task_entity.dart';
 import '../bloc/task_bloc.dart';
+import '../../../../core/widgets/shining_effect.dart';
 
 class AddTaskPage extends StatefulWidget {
   const AddTaskPage({super.key});
@@ -80,291 +82,287 @@ class _AddTaskPageState extends State<AddTaskPage> {
     );
 
     context.read<TaskBloc>().add(AddTask(task));
-    Navigator.pop(context);
+    shadcn.closeOverlay(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          child: ListView(
-            controller: scrollController,
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outline,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.82,
+      ),
+      child: shadcn.OverlayManagerLayer(
+        popoverHandler: shadcn.OverlayHandler.popover,
+        menuHandler: shadcn.OverlayHandler.popover,
+        tooltipHandler: shadcn.OverlayHandler.popover,
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          children: [
+            // Title
+            Text(
+              '✨ New Task',
+              style: AppTypography.h1(color: theme.colorScheme.primary),
+            ),
 
-              // Title
-              Text(
-                '✨ New Task',
-                style: AppTypography.h1(color: theme.colorScheme.primary),
-              ),
+            const BowDivider(),
+            const SizedBox(height: 8),
 
-              const BowDivider(),
-              const SizedBox(height: 8),
+            // Title input
+            Text('Title *',
+                style: AppTypography.bodyBold(
+                    color: theme.colorScheme.onSurface)),
+            const SizedBox(height: 8),
+            shadcn.TextField(
+              controller: _titleController,
+              placeholder: Text(AppStrings.quickAddHint),
+              style: AppTypography.body(color: theme.colorScheme.onSurface),
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
 
-              // Title input
-              Text('Title *',
-                  style: AppTypography.bodyBold(
-                      color: theme.colorScheme.onSurface)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: AppStrings.quickAddHint,
-                ),
-                style: AppTypography.body(color: theme.colorScheme.onSurface),
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
+            // Description input
+            Text('Description',
+                style: AppTypography.bodyBold(
+                    color: theme.colorScheme.onSurface)),
+            const SizedBox(height: 8),
+            shadcn.TextField(
+              controller: _descController,
+              placeholder: Text(AppStrings.descriptionHint),
+              style: AppTypography.body(color: theme.colorScheme.onSurface),
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
 
-              // Description
-              Text('Description',
-                  style: AppTypography.bodyBold(
-                      color: theme.colorScheme.onSurface)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _descController,
-                decoration: InputDecoration(
-                  hintText: AppStrings.descriptionHint,
-                ),
-                style: AppTypography.body(color: theme.colorScheme.onSurface),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
-
-              // Category + Priority row
-              Row(
-                children: [
-                  // Category
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Category',
-                            style: AppTypography.bodyBold(
-                                color: theme.colorScheme.onSurface)),
-                        const SizedBox(height: 8),
-                        _buildCategoryDropdown(theme),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Priority
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Priority',
-                            style: AppTypography.bodyBold(
-                                color: theme.colorScheme.onSurface)),
-                        const SizedBox(height: 8),
-                        _buildPriorityDropdown(theme),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Date + Time row
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Due Date',
-                            style: AppTypography.bodyBold(
-                                color: theme.colorScheme.onSurface)),
-                        const SizedBox(height: 8),
-                        _buildDatePicker(theme),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Due Time',
-                            style: AppTypography.bodyBold(
-                                color: theme.colorScheme.onSurface)),
-                        const SizedBox(height: 8),
-                        _buildTimePicker(theme),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Quick date shortcuts
-              Row(
-                children: [
-                  _buildDateChip(AppStrings.today, DateTime.now(), theme),
-                  const SizedBox(width: 8),
-                  _buildDateChip(AppStrings.tomorrow,
-                      DateTime.now().add(const Duration(days: 1)), theme),
-                  const SizedBox(width: 8),
-                  _buildDateChip(AppStrings.nextWeek,
-                      DateTime.now().add(const Duration(days: 7)), theme),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Alarm toggle
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+            // Category + Priority row
+            Row(
+              children: [
+                // Category
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('⏰ Alarm',
+                      Text('Category',
                           style: AppTypography.bodyBold(
                               color: theme.colorScheme.onSurface)),
-                      const SizedBox(width: 8),
-                      Text('(full-screen alert)',
-                          style: AppTypography.caption(
-                              color: theme.textTheme.bodySmall?.color)),
+                      const SizedBox(height: 8),
+                      _buildCategoryDropdown(theme),
                     ],
                   ),
-                  Switch(
-                    value: _hasAlarm,
-                    onChanged: (v) => setState(() => _hasAlarm = v),
+                ),
+                const SizedBox(width: 16),
+                // Priority
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Priority',
+                          style: AppTypography.bodyBold(
+                              color: theme.colorScheme.onSurface)),
+                      const SizedBox(height: 8),
+                      _buildPriorityDropdown(theme),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-              // Sub-tasks
-              Text('Sub-tasks',
-                  style: AppTypography.bodyBold(
-                      color: theme.colorScheme.onSurface)),
-              const SizedBox(height: 8),
-              ..._subTasks.map((s) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Icon(Icons.circle_outlined,
-                            size: 16, color: theme.colorScheme.outline),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(s.title,
-                              style: AppTypography.body(
-                                  color: theme.colorScheme.onSurface)),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close,
-                              size: 16, color: theme.colorScheme.error),
-                          onPressed: () {
-                            setState(() => _subTasks.remove(s));
-                          },
-                        ),
-                      ],
-                    ),
-                  )),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _subtaskController,
-                      decoration: const InputDecoration(
-                        hintText: '+ Add sub-task',
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // Date + Time row
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Due Date',
+                          style: AppTypography.bodyBold(
+                              color: theme.colorScheme.onSurface)),
+                      const SizedBox(height: 8),
+                      _buildDatePicker(theme),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Due Time',
+                          style: AppTypography.bodyBold(
+                              color: theme.colorScheme.onSurface)),
+                      const SizedBox(height: 8),
+                      _buildTimePicker(theme),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Quick date shortcuts — shadcn Button.outline (toggle-like)
+            Row(
+              children: [
+                _buildDateChip(AppStrings.today, DateTime.now(), theme),
+                const SizedBox(width: 8),
+                _buildDateChip(AppStrings.tomorrow,
+                    DateTime.now().add(const Duration(days: 1)), theme),
+                const SizedBox(width: 8),
+                _buildDateChip(AppStrings.nextWeek,
+                    DateTime.now().add(const Duration(days: 7)), theme),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Alarm toggle — shadcn Switch
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text('⏰ Alarm',
+                        style: AppTypography.bodyBold(
+                            color: theme.colorScheme.onSurface)),
+                    const SizedBox(width: 8),
+                    Text('(full-screen alert)',
+                        style: AppTypography.caption(
+                            color: theme.textTheme.bodySmall?.color)),
+                  ],
+                ),
+                shadcn.Switch(
+                  value: _hasAlarm,
+                  onChanged: (v) => setState(() => _hasAlarm = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            const BowDivider(),
+            const SizedBox(height: 8),
+
+            // Sub-tasks header
+            Text('Sub-tasks',
+                style: AppTypography.bodyBold(
+                    color: theme.colorScheme.onSurface)),
+            const SizedBox(height: 12),
+
+            // List of existing sub-tasks
+            if (_subTasks.isNotEmpty) ...[
+              ..._subTasks.map((s) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.subdirectory_arrow_right_rounded,
+                          size: 16, color: theme.colorScheme.outline),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(s.title,
+                            style: AppTypography.body(
+                                color: theme.colorScheme.onSurface)),
                       ),
-                      style:
-                          AppTypography.body(color: theme.colorScheme.onSurface),
-                      onSubmitted: (_) => _addSubTask(),
-                    ),
+                      shadcn.Button(
+                        style: const shadcn.ButtonStyle.ghost(
+                          size: shadcn.ButtonSize.xSmall,
+                        ),
+                        onPressed: () {
+                          setState(() => _subTasks.remove(s));
+                        },
+                        child: Icon(Icons.close_rounded,
+                            size: 16, color: theme.colorScheme.error),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: _addSubTask,
-                    icon: Icon(Icons.add_circle_rounded,
-                        color: theme.colorScheme.primary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                );
+              }),
+              const SizedBox(height: 12),
+            ],
 
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            // Input to add new sub-task
+            Row(
+              children: [
+                Expanded(
+                  child: shadcn.TextField(
+                    controller: _subtaskController,
+                    placeholder: const Text('+ Add sub-task'),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    style:
+                        AppTypography.body(color: theme.colorScheme.onSurface),
+                    onSubmitted: (_) => _addSubTask(),
                   ),
+                ),
+                // shadcn Button.ghost for add
+                shadcn.Button.ghost(
+                  onPressed: _addSubTask,
+                  child: Icon(Icons.add_circle_rounded,
+                      color: theme.colorScheme.primary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Submit button — shadcn Button.primary
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ShiningBorder(
+                child: shadcn.Button.primary(
+                  onPressed: _submit,
+                  alignment: Alignment.center,
                   child: Text(
                     '✨ Add Task ✨',
                     style: AppTypography.h3(color: theme.colorScheme.onPrimary),
                   ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildCategoryDropdown(ThemeData theme) {
     return BlocBuilder<CategoryBloc, CategoryState>(
       builder: (context, state) {
-        final categories =
-            state is CategoryLoaded ? state.categories : CategoryEntity.defaults;
+        final categories = (state is CategoryLoaded
+                ? state.categories
+                : CategoryEntity.defaults)
+            .cast<CategoryEntity>();
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.outline),
-            borderRadius: BorderRadius.circular(8),
+        final selectedCat = categories.firstWhere((cat) => cat.id == _selectedCategoryId, orElse: () => categories.first);
+
+        return shadcn.Select<String>(
+          value: _selectedCategoryId,
+          onChanged: (v) {
+            if (v != null) setState(() => _selectedCategoryId = v);
+          },
+          popupWidthConstraint: shadcn.PopoverConstraint.flexible,
+          popupConstraints: const BoxConstraints(
+            minWidth: 120,
+            maxWidth: 160,
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedCategoryId,
-              isExpanded: true,
-              dropdownColor: theme.cardTheme.color,
-              items: categories.map((cat) {
-                return DropdownMenuItem(
-                  value: cat.id,
-                  child: Text('${cat.emoji} ${cat.name}',
-                      style: AppTypography.body(
-                          color: theme.colorScheme.onSurface)),
-                );
-              }).toList(),
-              onChanged: (v) {
-                if (v != null) setState(() => _selectedCategoryId = v);
-              },
-            ),
-          ),
+          itemBuilder: (context, val) {
+            final cat = categories.firstWhere((c) => c.id == val, orElse: () => selectedCat);
+            return Text('${cat.emoji} ${cat.name}',
+                style: AppTypography.body(color: theme.colorScheme.onSurface));
+          },
+          popup: (context) {
+            return shadcn.SelectPopup(
+              items: shadcn.SelectItemList(
+                children: categories.map((cat) {
+                  return shadcn.SelectItemButton(
+                    value: cat.id,
+                    child: Text('${cat.emoji} ${cat.name}',
+                        style: AppTypography.body(color: theme.colorScheme.onSurface)),
+                  );
+                }).toList(),
+              ),
+            );
+          },
         );
       },
     );
@@ -378,30 +376,33 @@ class _AddTaskPageState extends State<AddTaskPage> {
       TaskPriority.urgent: '❤️ Urgent',
     };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outline),
-        borderRadius: BorderRadius.circular(8),
+    return shadcn.Select<TaskPriority>(
+      value: _selectedPriority,
+      onChanged: (v) {
+        if (v != null) setState(() => _selectedPriority = v);
+      },
+      popupWidthConstraint: shadcn.PopoverConstraint.flexible,
+      popupConstraints: const BoxConstraints(
+        minWidth: 120,
+        maxWidth: 160,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<TaskPriority>(
-          value: _selectedPriority,
-          isExpanded: true,
-          dropdownColor: theme.cardTheme.color,
-          items: priorities.entries.map((e) {
-            return DropdownMenuItem(
-              value: e.key,
-              child: Text(e.value,
-                  style:
-                      AppTypography.body(color: theme.colorScheme.onSurface)),
-            );
-          }).toList(),
-          onChanged: (v) {
-            if (v != null) setState(() => _selectedPriority = v);
-          },
-        ),
-      ),
+      itemBuilder: (context, val) {
+        return Text(priorities[val] ?? '',
+            style: AppTypography.body(color: theme.colorScheme.onSurface));
+      },
+      popup: (context) {
+        return shadcn.SelectPopup(
+          items: shadcn.SelectItemList(
+            children: priorities.entries.map((e) {
+              return shadcn.SelectItemButton(
+                value: e.key,
+                child: Text(e.value,
+                    style: AppTypography.body(color: theme.colorScheme.onSurface)),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -473,16 +474,21 @@ class _AddTaskPageState extends State<AddTaskPage> {
         _dueDate!.month == date.month &&
         _dueDate!.day == date.day;
 
-    return ActionChip(
-      label: Text(label),
-      onPressed: () => setState(() => _dueDate = date),
-      backgroundColor:
-          isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
-      labelStyle: AppTypography.small(
-        color: isSelected
-            ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurface,
-      ),
-    );
+    // Use shadcn Button with toggle-like styling
+    return isSelected
+        ? shadcn.Button(
+            style: const shadcn.ButtonStyle.primary(
+              size: shadcn.ButtonSize.small,
+            ),
+            onPressed: () => setState(() => _dueDate = date),
+            child: Text(label),
+          )
+        : shadcn.Button(
+            style: const shadcn.ButtonStyle.outline(
+              size: shadcn.ButtonSize.small,
+            ),
+            onPressed: () => setState(() => _dueDate = date),
+            child: Text(label),
+          );
   }
 }

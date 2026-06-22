@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
@@ -154,13 +155,9 @@ class _HistoryPageState extends State<HistoryPage> {
           ref.day == date.day;
     }).toList();
 
-    showModalBottomSheet(
+    shadcn.openDrawer(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      position: shadcn.OverlayPosition.bottom,
       builder: (ctx) => BlocBuilder<CategoryBloc, CategoryState>(
         builder: (ctx, catState) {
           final categories =

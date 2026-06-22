@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_strings.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 /// Floating action button with coquette bow-style accent and tooltip
 class QuickAddFabWidget extends StatelessWidget {
@@ -30,10 +30,11 @@ class QuickAddFabWidget extends StatelessWidget {
                 ),
               ],
             ),
-            child: FloatingActionButton(
+            child: shadcn.Button(
+              style: const shadcn.ButtonStyle.primary(
+                shape: shadcn.ButtonShape.circle,
+              ),
               onPressed: onPressed,
-              tooltip: AppStrings.fabTooltip,
-              elevation: 0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

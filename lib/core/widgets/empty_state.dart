@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import '../constants/app_assets.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_typography.dart';
+import 'shining_effect.dart';
 
 /// Motivational empty state with Lottie animation and random coquette quotes
 class EmptyStateWidget extends StatelessWidget {
@@ -40,21 +42,15 @@ class EmptyStateWidget extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // Add task button
+            // Add task button — shadcn Button.primary
             if (onAddTask != null)
-              FilledButton.icon(
-                onPressed: onAddTask,
-                icon: const Icon(Icons.add_rounded, size: 20),
-                label: Text(
-                  'Add your first task',
-                  style: AppTypography.bodyBold(color: theme.colorScheme.onPrimary),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+              ShiningBorder(
+                child: shadcn.Button.primary(
+                  onPressed: onAddTask,
+                  leading: const Icon(Icons.add_rounded, size: 20),
+                  child: Text(
+                    'Add your first task',
+                    style: AppTypography.bodyBold(color: theme.colorScheme.onPrimary),
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -100,17 +101,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         if (gamState is GamificationLoaded && gamState.justLeveledUp) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             sl<SoundService>().playLevelUp();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Level up! You\'re now ${stats.level.title}! 🎉',
-                  style: AppTypography.bodyBold(color: Colors.white),
-                ),
-                backgroundColor: isDark
-                    ? AppColors.goldAccentDark
-                    : AppColors.goldAccentLight,
-                behavior: SnackBarBehavior.floating,
-              ),
+            // shadcn Toast instead of SnackBar
+            shadcn.showToast(
+              context: context,
+              builder: (context, overlay) {
+                return shadcn.SurfaceCard(
+                  child: shadcn.Basic(
+                    title: Text(
+                      'Level up! You\'re now ${stats.level.title}! 🎉',
+                      style: AppTypography.bodyBold(color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight),
+                    ),
+                  ),
+                );
+              },
+              location: shadcn.ToastLocation.bottomCenter,
             );
           });
         }
@@ -197,20 +203,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        // XP Progress bar
+                        // XP Progress bar — shadcn
                         ClipRRect(
                           borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
+                          child: shadcn.LinearProgressIndicator(
                             value: stats.xpProgress,
-                            minHeight: 8,
-                            backgroundColor: isDark
-                                ? AppColors.blushDark
-                                : AppColors.blushLight,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark
-                                  ? AppColors.goldAccentDark
-                                  : AppColors.goldAccentLight,
-                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -224,12 +221,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                   ),
 
-                  // Dark mode toggle
-                  IconButton(
+                  // Dark mode toggle — shadcn Button.ghost
+                  shadcn.Button.ghost(
                     onPressed: () {
                       context.read<ThemeBloc>().add(ToggleTheme());
                     },
-                    icon: Icon(
+                    child: Icon(
                       isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                       color: theme.colorScheme.primary,
                     ),
@@ -307,45 +304,65 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  // "All" chip
+                  // "All" chip — shadcn Button toggle
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      selected: activeId == 'all',
-                      label: Text('All ✨'),
-                      onSelected: (_) {
-                        context.read<TaskBloc>().add(
-                            const FilterByCategory('all'));
-                      },
-                      selectedColor: theme.colorScheme.primary,
-                      labelStyle: AppTypography.small(
-                        color: activeId == 'all'
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurface,
-                      ),
-                      showCheckmark: false,
-                    ),
+                    child: activeId == 'all'
+                        ? shadcn.Button(
+                            style: const shadcn.ButtonStyle.primary(
+                              size: shadcn.ButtonSize.small,
+                            ),
+                            onPressed: () {
+                              context.read<TaskBloc>().add(
+                                  const FilterByCategory('all'));
+                            },
+                            child: Text('All ✨',
+                                style: AppTypography.small(
+                                    color: theme.colorScheme.onPrimary)),
+                          )
+                        : shadcn.Button(
+                            style: const shadcn.ButtonStyle.outline(
+                              size: shadcn.ButtonSize.small,
+                            ),
+                            onPressed: () {
+                              context.read<TaskBloc>().add(
+                                  const FilterByCategory('all'));
+                            },
+                            child: Text('All ✨',
+                                style: AppTypography.small(
+                                    color: theme.colorScheme.onSurface)),
+                          ),
                   ),
-                  // Category chips
+                  // Category chips — shadcn Button toggle
                   ...categories.map((cat) {
                     final isActive = activeId == cat.id;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        selected: isActive,
-                        label: Text('${cat.emoji} ${cat.name}'),
-                        onSelected: (_) {
-                          context.read<TaskBloc>().add(
-                              FilterByCategory(cat.id));
-                        },
-                        selectedColor: Color(cat.colorValue),
-                        labelStyle: AppTypography.small(
-                          color: isActive
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurface,
-                        ),
-                        showCheckmark: false,
-                      ),
+                      child: isActive
+                          ? shadcn.Button(
+                              style: const shadcn.ButtonStyle.primary(
+                                size: shadcn.ButtonSize.small,
+                              ),
+                              onPressed: () {
+                                context.read<TaskBloc>().add(
+                                    FilterByCategory(cat.id));
+                              },
+                              child: Text('${cat.emoji} ${cat.name}',
+                                  style: AppTypography.small(
+                                      color: theme.colorScheme.onPrimary)),
+                            )
+                          : shadcn.Button(
+                              style: const shadcn.ButtonStyle.outline(
+                                size: shadcn.ButtonSize.small,
+                              ),
+                              onPressed: () {
+                                context.read<TaskBloc>().add(
+                                    FilterByCategory(cat.id));
+                              },
+                              child: Text('${cat.emoji} ${cat.name}',
+                                  style: AppTypography.small(
+                                      color: theme.colorScheme.onSurface)),
+                            ),
                     );
                   }),
                 ],
@@ -586,14 +603,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(999),
-                              child: LinearProgressIndicator(
+                              child: shadcn.LinearProgressIndicator(
                                 value: task.subTaskProgress,
-                                minHeight: 4,
-                                backgroundColor: isDark
-                                    ? AppColors.blushDark
-                                    : AppColors.blushLight,
-                                valueColor: AlwaysStoppedAnimation(
-                                    theme.colorScheme.primary),
                               ),
                             ),
                           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -108,14 +109,8 @@ class TaskCardWidget extends StatelessWidget {
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
+                          child: shadcn.LinearProgressIndicator(
                             value: task.subTaskProgress,
-                            minHeight: 4,
-                            backgroundColor: isDark
-                                ? AppColors.blushDark
-                                : AppColors.blushLight,
-                            valueColor: AlwaysStoppedAnimation(
-                                theme.colorScheme.primary),
                           ),
                         ),
                       ),

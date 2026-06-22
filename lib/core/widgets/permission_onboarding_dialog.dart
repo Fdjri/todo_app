@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
@@ -83,17 +84,10 @@ class PermissionOnboardingDialog extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Button
+            // Button — shadcn Button.primary
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+              child: shadcn.Button.primary(
                 onPressed: () async {
                   Navigator.of(context).pop();
                   final svc = AlarmService();
@@ -114,8 +108,8 @@ class PermissionOnboardingDialog extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // Skip
-            TextButton(
+            // Skip — shadcn Button.ghost
+            shadcn.Button.ghost(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Skip for now',
