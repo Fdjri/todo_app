@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 import '../services/alarm_service.dart';
 
@@ -30,13 +29,11 @@ class PermissionOnboardingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textBody =
-        isDark ? AppColors.textBodyDark : AppColors.textBodyLight;
-    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final textPrimary = theme.colorScheme.onSurface;
+    final textBody = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final surface = theme.colorScheme.surface;
 
     return Dialog(
       backgroundColor: surface,
@@ -88,6 +85,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: shadcn.Button.primary(
+                alignment: Alignment.center,
                 onPressed: () async {
                   Navigator.of(context).pop();
                   final svc = AlarmService();

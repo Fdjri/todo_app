@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
 /// Neon glow bottom navigation bar inspired by the design reference.
@@ -17,11 +16,12 @@ class NeonNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
-    final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
-    final textHint = isDark ? AppColors.textHintDark : AppColors.textHintLight;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+    final surface = theme.colorScheme.surface;
+    final background = theme.scaffoldBackgroundColor;
+    final textHint = theme.hintColor;
 
     return Container(
       // Neon top shadow glow

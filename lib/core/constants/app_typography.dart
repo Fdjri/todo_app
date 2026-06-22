@@ -6,16 +6,16 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTypography {
   AppTypography._();
 
-  /// Current heading font family — changed via Settings
+  /// Current active font family — changed via Settings
   static String _headingFamily = 'Playfair Display';
 
-  /// Update the heading font family globally.
+  /// Update the active font family globally.
   static void setHeadingFamily(String family) {
     _headingFamily = family;
   }
 
   // ─── Font Families ───
-  static TextStyle get _heading {
+  static TextStyle get _selectedFont {
     switch (_headingFamily) {
       case 'Nunito':
         return GoogleFonts.nunito();
@@ -27,11 +27,8 @@ class AppTypography {
     }
   }
 
-  static TextStyle get _nunito => GoogleFonts.nunito();
-  static TextStyle get _dancingScript => GoogleFonts.dancingScript();
-
   // ─── Display ───
-  static TextStyle display({Color? color}) => _heading.copyWith(
+  static TextStyle display({Color? color}) => _selectedFont.copyWith(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         height: 1.3,
@@ -39,21 +36,21 @@ class AppTypography {
       );
 
   // ─── Headings ───
-  static TextStyle h1({Color? color}) => _heading.copyWith(
+  static TextStyle h1({Color? color}) => _selectedFont.copyWith(
         fontSize: 24,
         fontWeight: FontWeight.w700,
         height: 1.3,
         color: color,
       );
 
-  static TextStyle h2({Color? color}) => _heading.copyWith(
+  static TextStyle h2({Color? color}) => _selectedFont.copyWith(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.3,
         color: color,
       );
 
-  static TextStyle h3({Color? color}) => _nunito.copyWith(
+  static TextStyle h3({Color? color}) => _selectedFont.copyWith(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         height: 1.4,
@@ -61,14 +58,14 @@ class AppTypography {
       );
 
   // ─── Body ───
-  static TextStyle body({Color? color}) => _nunito.copyWith(
+  static TextStyle body({Color? color}) => _selectedFont.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         height: 1.5,
         color: color,
       );
 
-  static TextStyle bodyBold({Color? color}) => _nunito.copyWith(
+  static TextStyle bodyBold({Color? color}) => _selectedFont.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         height: 1.5,
@@ -76,7 +73,7 @@ class AppTypography {
       );
 
   // ─── Caption ───
-  static TextStyle caption({Color? color}) => _nunito.copyWith(
+  static TextStyle caption({Color? color}) => _selectedFont.copyWith(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.4,
@@ -84,7 +81,7 @@ class AppTypography {
       );
 
   // ─── Small ───
-  static TextStyle small({Color? color}) => _nunito.copyWith(
+  static TextStyle small({Color? color}) => _selectedFont.copyWith(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         height: 1.3,
@@ -92,14 +89,14 @@ class AppTypography {
       );
 
   // ─── Accent / Quotes ───
-  static TextStyle quote({Color? color}) => _dancingScript.copyWith(
+  static TextStyle quote({Color? color}) => _selectedFont.copyWith(
         fontSize: 18,
         fontWeight: FontWeight.w400,
         height: 1.5,
         color: color,
       );
 
-  static TextStyle quoteLarge({Color? color}) => _dancingScript.copyWith(
+  static TextStyle quoteLarge({Color? color}) => _selectedFont.copyWith(
         fontSize: 24,
         fontWeight: FontWeight.w700,
         height: 1.3,

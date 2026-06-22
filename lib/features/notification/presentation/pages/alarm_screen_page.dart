@@ -73,7 +73,13 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+    final bg = theme.scaffoldBackgroundColor;
+    final primaryDarker = HSLColor.fromColor(primary)
+        .withLightness((HSLColor.fromColor(primary).lightness - 0.15).clamp(0.0, 1.0))
+        .toColor();
 
     return Scaffold(
       body: Container(
@@ -83,15 +89,10 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    AppColors.primaryDarkDark,
-                    AppColors.backgroundDark,
-                  ]
-                : [
-                    AppColors.primaryDarkLight,
-                    AppColors.backgroundLight,
-                  ],
+            colors: [
+              primaryDarker,
+              bg,
+            ],
           ),
         ),
         child: SafeArea(
@@ -113,9 +114,7 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
+                            color: primary
                                 .withValues(alpha: _pulseAnimation.value * 0.5),
                             blurRadius: 40 * _pulseAnimation.value,
                             spreadRadius: 10 * _pulseAnimation.value,

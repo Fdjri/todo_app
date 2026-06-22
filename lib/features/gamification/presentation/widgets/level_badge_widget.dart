@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../domain/entities/user_stats_entity.dart';
 
@@ -17,7 +16,6 @@ class LevelBadgeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final level = stats.level;
 
     if (compact) {
@@ -85,11 +83,9 @@ class LevelBadgeWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: stats.xpProgress,
               minHeight: 10,
-              backgroundColor: isDark
-                  ? AppColors.blushDark
-                  : AppColors.blushLight,
+              backgroundColor: theme.colorScheme.primaryContainer,
               valueColor: AlwaysStoppedAnimation<Color>(
-                isDark ? AppColors.goldAccentDark : AppColors.goldAccentLight,
+                theme.colorScheme.secondary,
               ),
             ),
           ),

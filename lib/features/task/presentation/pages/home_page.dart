@@ -109,9 +109,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   child: shadcn.Basic(
                     title: Text(
                       'Level up! You\'re now ${stats.level.title}! 🎉',
-                      style: AppTypography.bodyBold(color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight),
+                      style: AppTypography.bodyBold(color: theme.colorScheme.onSurface),
                     ),
                   ),
                 );

@@ -78,6 +78,12 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final primaryDarker = HSLColor.fromColor(primary)
+        .withLightness((HSLColor.fromColor(primary).lightness - 0.15).clamp(0.0, 1.0))
+        .toColor();
+
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, gamState) {
         final stats = gamState is GamificationLoaded
@@ -96,9 +102,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: isDark
-                        ? [AppColors.primaryDark, AppColors.primaryDarkDark]
-                        : [AppColors.primaryLight, AppColors.primaryDarkLight],
+                    colors: [primary, primaryDarker],
                   ),
                 ),
                 child: const Center(
@@ -110,9 +114,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 child: Text(
                   'Hey, queen! 👑',
                   style: AppTypography.h2(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -122,16 +124,12 @@ class _HistoryPageState extends State<HistoryPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
-                    color: isDark
-                        ? AppColors.blushDark
-                        : AppColors.blushLight,
+                    color: theme.colorScheme.primaryContainer,
                   ),
                   child: Text(
                     '$streak 🔥',
                     style: AppTypography.bodyBold(
-                      color: isDark
-                          ? AppColors.goldAccentDark
-                          : AppColors.goldAccentLight,
+                      color: theme.colorScheme.secondary,
                     ),
                   ),
                 ),
@@ -226,9 +224,10 @@ class _MonthCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textHint = isDark ? AppColors.textHintDark : AppColors.textHintLight;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final textPrimary = theme.colorScheme.onSurface;
+    final textHint = theme.hintColor;
 
     // First day of month
     final firstDay = DateTime(month.year, month.month, 1);
@@ -399,11 +398,12 @@ class _DayDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textBody = isDark ? AppColors.textBodyDark : AppColors.textBodyLight;
-    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+    final textPrimary = theme.colorScheme.onSurface;
+    final textBody = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final surface = theme.colorScheme.surface;
 
     return Container(
       constraints: BoxConstraints(
@@ -535,7 +535,8 @@ class _TaskHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = isDark ? AppColors.creamDark : AppColors.creamLight;
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.secondaryContainer;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

@@ -13,8 +13,6 @@ import 'features/gamification/presentation/bloc/gamification_bloc.dart';
 import 'features/alarm/alarm_page.dart';
 import 'presentation/main_shell.dart';
 
-import 'core/constants/app_colors.dart';
-
 class WorkaholicApp extends StatefulWidget {
   /// If the app was cold-started by tapping an alarm notification,
   /// these fields carry the task info to show AlarmPage immediately.
@@ -44,15 +42,51 @@ class _WorkaholicAppState extends State<WorkaholicApp> {
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
           final isDark = themeState.isDarkMode;
-          final primaryColor = ThemeBloc.themeColors[themeState.colorIndex];
+          final currentTheme = themeState.themeData;
+          final primaryColor = currentTheme.colorScheme.primary;
+          final primaryContainer = currentTheme.colorScheme.primaryContainer;
+          final secondaryContainer = currentTheme.colorScheme.secondaryContainer;
+          final scaffoldBg = currentTheme.scaffoldBackgroundColor;
+          final surface = currentTheme.colorScheme.surface;
+          final textPrimary = currentTheme.colorScheme.onSurface;
+          final textHint = currentTheme.hintColor;
+
           final shadcnScheme = isDark
               ? shadcn.ColorSchemes.darkZinc.copyWith(
                   primary: () => primaryColor,
                   primaryForeground: () => Colors.white,
+                  background: () => scaffoldBg,
+                  foreground: () => textPrimary,
+                  card: () => surface,
+                  cardForeground: () => textPrimary,
+                  popover: () => surface,
+                  popoverForeground: () => textPrimary,
+                  border: () => primaryContainer,
+                  input: () => primaryContainer,
+                  secondary: () => secondaryContainer,
+                  secondaryForeground: () => textPrimary,
+                  muted: () => secondaryContainer,
+                  mutedForeground: () => textHint,
+                  accent: () => primaryContainer,
+                  accentForeground: () => textPrimary,
                 )
               : shadcn.ColorSchemes.lightZinc.copyWith(
                   primary: () => primaryColor,
                   primaryForeground: () => Colors.white,
+                  background: () => scaffoldBg,
+                  foreground: () => textPrimary,
+                  card: () => surface,
+                  cardForeground: () => textPrimary,
+                  popover: () => surface,
+                  popoverForeground: () => textPrimary,
+                  border: () => primaryContainer,
+                  input: () => primaryContainer,
+                  secondary: () => secondaryContainer,
+                  secondaryForeground: () => textPrimary,
+                  muted: () => secondaryContainer,
+                  mutedForeground: () => textHint,
+                  accent: () => primaryContainer,
+                  accentForeground: () => textPrimary,
                 );
 
           return shadcn.ShadcnApp(
@@ -63,13 +97,13 @@ class _WorkaholicAppState extends State<WorkaholicApp> {
                 ? ShadcnCoquetteTheme.dark(colorSchemeOverride: shadcnScheme)
                 : ShadcnCoquetteTheme.light(colorSchemeOverride: shadcnScheme),
             // Material theme (for backward-compat with Material widgets)
-            materialTheme: themeState.themeData,
+            materialTheme: currentTheme,
             navigatorKey: navigatorKey,
             builder: (context, child) {
               return shadcn.ComponentTheme<shadcn.SwitchTheme>(
                 data: shadcn.SwitchTheme(
-                  inactiveThumbColor: isDark ? AppColors.textHintDark : AppColors.textHintLight,
-                  inactiveColor: isDark ? AppColors.creamDark : AppColors.creamLight,
+                  inactiveThumbColor: currentTheme.hintColor,
+                  inactiveColor: currentTheme.colorScheme.secondaryContainer,
                 ),
                 child: child!,
               );

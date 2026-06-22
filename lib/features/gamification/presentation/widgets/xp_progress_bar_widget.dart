@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../domain/entities/user_stats_entity.dart';
 
@@ -12,7 +11,6 @@ class XpProgressBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final level = stats.level;
 
     return Column(
@@ -44,11 +42,9 @@ class XpProgressBarWidget extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: value,
                 minHeight: 8,
-                backgroundColor: isDark
-                    ? AppColors.blushDark
-                    : AppColors.blushLight,
+                backgroundColor: theme.colorScheme.primaryContainer,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isDark ? AppColors.goldAccentDark : AppColors.goldAccentLight,
+                  theme.colorScheme.secondary,
                 ),
               ),
             );

@@ -144,6 +144,13 @@ class _AlarmPageState extends State<AlarmPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = theme.scaffoldBackgroundColor;
+    final primary = theme.colorScheme.primary;
+    final blush = theme.colorScheme.primaryContainer;
+    final textPrimary = theme.colorScheme.onSurface;
+    final textHint = theme.hintColor;
+
     final hour = _now.hour.toString().padLeft(2, '0');
     final min = _now.minute.toString().padLeft(2, '0');
 
@@ -174,9 +181,9 @@ class _AlarmPageState extends State<AlarmPage>
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        const Color(0xFF1A1118),
-                        AppColors.blushDark.withValues(alpha: 0.8),
-                        const Color(0xFF1A1118),
+                        bg,
+                        blush.withValues(alpha: 0.8),
+                        bg,
                       ],
                     ),
                   ),
@@ -208,7 +215,7 @@ class _AlarmPageState extends State<AlarmPage>
                     Text(
                       '$hour:$min',
                       style: AppTypography.display(
-                        color: AppColors.primaryDark,
+                        color: primary,
                       ).copyWith(fontSize: 72, fontWeight: FontWeight.w700),
                     ),
 
@@ -216,7 +223,7 @@ class _AlarmPageState extends State<AlarmPage>
                     Text(
                       'Alarm ringed!',
                       style: AppTypography.caption(
-                          color: AppColors.textHintDark),
+                          color: textHint),
                     ),
 
                     const Spacer(),
@@ -231,14 +238,14 @@ class _AlarmPageState extends State<AlarmPage>
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.primaryDark.withValues(alpha: 0.6),
-                              AppColors.primaryDark.withValues(alpha: 0.1),
+                              primary.withValues(alpha: 0.6),
+                              primary.withValues(alpha: 0.1),
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
                               color:
-                                  AppColors.primaryDark.withValues(alpha: 0.55),
+                                  primary.withValues(alpha: 0.55),
                               blurRadius: 32,
                               spreadRadius: 8,
                             ),
@@ -259,7 +266,7 @@ class _AlarmPageState extends State<AlarmPage>
                       child: Text(
                         widget.taskTitle,
                         style: AppTypography.h1(
-                            color: AppColors.textPrimaryDark),
+                            color: textPrimary),
                         textAlign: TextAlign.center,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -319,6 +326,7 @@ class _AlarmPageState extends State<AlarmPage>
   }
 
   Widget _buildSwipeIndicator() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Row(
@@ -344,7 +352,7 @@ class _AlarmPageState extends State<AlarmPage>
                   gradient: LinearGradient(
                     colors: [
                       AppColors.infoDark.withValues(alpha: 0.6),
-                      AppColors.primaryDark.withValues(alpha: 0.4),
+                      theme.colorScheme.primary.withValues(alpha: 0.4),
                       AppColors.successDark.withValues(alpha: 0.6),
                     ],
                   ),
