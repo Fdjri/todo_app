@@ -9,6 +9,9 @@ class AppAssets {
   static const String lottieEmptyState = 'assets/lottie/empty_state.json';
   static const String lottieAlarmPulse = 'assets/lottie/alarm_pulse.json';
 
+  // ─── Images ───
+  static const String imageFernSpin = 'assets/images/fern-spin-gif-fern-spin-spinning.gif';
+
   // ─── Sound Effects ───
   static const String soundTaskComplete = 'sounds/task_complete.wav';
   static const String soundLevelUp = 'sounds/level_up.wav';

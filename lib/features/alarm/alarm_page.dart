@@ -2,8 +2,13 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vibration/vibration.dart';
 
+import '../task/presentation/bloc/task_bloc.dart';
+import '../gamification/presentation/bloc/gamification_bloc.dart';
+
+import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/services/alarm_service.dart';
@@ -113,6 +118,16 @@ class _AlarmPageState extends State<AlarmPage>
   Future<void> _done() async {
     await _stopAlarm();
     await AlarmService().cancelAlarm(widget.taskId);
+    
+    if (!mounted) return;
+    try {
+      context.read<TaskBloc>().add(ToggleTaskCompletion(widget.taskId));
+      context.read<GamificationBloc>().add(TaskCompleted());
+      context.read<GamificationBloc>().add(UpdateStreak());
+    } catch (e) {
+      debugPrint('[AlarmPage] Error toggling task completion: $e');
+    }
+
     if (mounted) Navigator.of(context).pop(AlarmResult.done);
   }
 
@@ -258,9 +273,15 @@ class _AlarmPageState extends State<AlarmPage>
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text('⏰',
-                              style: TextStyle(fontSize: 52)),
+                        child: Center(
+                          child: ClipOval(
+                            child: Image.asset(
+                              AppAssets.imageFernSpin,
+                              width: 86,
+                              height: 86,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                       ),
                     ),
