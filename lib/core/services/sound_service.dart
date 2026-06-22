@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../constants/app_assets.dart';
 import '../../injection_container.dart';
 
@@ -49,6 +51,20 @@ class SoundService {
     }
   }
 
+  Future<String> getCustomSoundPath() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    return '${appDir.path}/custom_ringtone.wav';
+  }
+
+  Future<bool> hasCustomSound() async {
+    try {
+      final path = await getCustomSoundPath();
+      return await File(path).exists();
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> playTaskComplete() async {
     await _play(AppAssets.soundTaskComplete);
   }
@@ -67,12 +83,20 @@ class SoundService {
 
   Future<void> playPreview(String soundName) async {
     if (!_enabled) return;
-    final assetPath = getSoundAssetPath(soundName);
-    if (assetPath.isEmpty) return;
     try {
       await _player.stop();
       await _player.setReleaseMode(ReleaseMode.release);
-      await _player.play(AssetSource(assetPath));
+      if (soundName == 'Custom Recording') {
+        final path = await getCustomSoundPath();
+        if (await File(path).exists()) {
+          await _player.play(DeviceFileSource(path));
+        }
+      } else {
+        final assetPath = getSoundAssetPath(soundName);
+        if (assetPath.isNotEmpty) {
+          await _player.play(AssetSource(assetPath));
+        }
+      }
     } catch (_) {}
   }
 

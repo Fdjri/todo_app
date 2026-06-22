@@ -75,10 +75,15 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
     try {
       final selectedSound = sl<SoundService>().getSelectedSound();
       if (selectedSound != 'None') {
-        final path = sl<SoundService>().getSoundAssetPath(selectedSound);
-        if (path.isNotEmpty) {
-          await _player.setReleaseMode(ReleaseMode.loop);
-          await _player.play(AssetSource(path));
+        await _player.setReleaseMode(ReleaseMode.loop);
+        if (selectedSound == 'Custom Recording') {
+          final path = await sl<SoundService>().getCustomSoundPath();
+          await _player.play(DeviceFileSource(path));
+        } else {
+          final path = sl<SoundService>().getSoundAssetPath(selectedSound);
+          if (path.isNotEmpty) {
+            await _player.play(AssetSource(path));
+          }
         }
       }
     } catch (_) {}

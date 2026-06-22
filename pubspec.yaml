@@ -19,6 +19,7 @@ dependencies:
 
   # Local Storage
   shared_preferences: ^2.3.0
+  path_provider: ^2.1.0
 
   # Dependency Injection
   get_it: ^8.0.0
@@ -41,6 +42,7 @@ dependencies:
   # Database
   sqflite: ^2.3.3+1
   path: ^1.9.0
+  flutter_native_splash: ^2.4.1
 
   # Utilities
   uuid: ^4.0.0
@@ -57,7 +59,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
@@ -79,3 +80,9 @@ flutter_native_splash:
   image_dark: "assets/images/splash.png"
   android: true
   ios: false
+
+  android_12:
+    color: "#FDF6F8"
+    image: "assets/images/splash_android12.png"
+    color_dark: "#1A0F12"
+    image_dark: "assets/images/splash_android12.png"

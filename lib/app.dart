@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'injection_container.dart';
 import 'main.dart' show navigatorKey;
@@ -142,6 +143,7 @@ class _AppHomeState extends State<_AppHome> {
   }
 
   Future<void> _postInit() async {
+    FlutterNativeSplash.remove();
     if (!mounted) return;
 
     // Show permission onboarding if first launch

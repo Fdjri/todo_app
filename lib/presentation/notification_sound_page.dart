@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../core/constants/app_typography.dart';
 import '../core/services/sound_service.dart';
 import '../injection_container.dart';
+import 'widgets/piano_recorder_dialog.dart';
 
 class NotificationSoundPage extends StatefulWidget {
   const NotificationSoundPage({super.key});
@@ -28,12 +29,33 @@ class _NotificationSoundPageState extends State<NotificationSoundPage> {
   void initState() {
     super.initState();
     _selectedSound = sl<SoundService>().getSelectedSound();
+    _loadSounds();
     _player.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
           _playingSound = null;
         });
       }
+    });
+  }
+
+  Future<void> _loadSounds() async {
+    final hasCustom = await sl<SoundService>().hasCustomSound();
+    if (hasCustom) {
+      if (!_soundOptions.contains('Custom Recording')) {
+        setState(() {
+          _soundOptions.insert(_soundOptions.length - 1, 'Custom Recording');
+        });
+      }
+    } else {
+      if (_soundOptions.contains('Custom Recording')) {
+        setState(() {
+          _soundOptions.remove('Custom Recording');
+        });
+      }
+    }
+    setState(() {
+      _selectedSound = sl<SoundService>().getSelectedSound();
     });
   }
 
@@ -59,14 +81,24 @@ class _NotificationSoundPageState extends State<NotificationSoundPage> {
       });
     } else {
       await _player.stop();
-      final path = sl<SoundService>().getSoundAssetPath(soundName);
-      if (path.isNotEmpty) {
+      if (soundName == 'Custom Recording') {
+        final path = await sl<SoundService>().getCustomSoundPath();
         try {
-          await _player.play(AssetSource(path));
+          await _player.play(DeviceFileSource(path));
           setState(() {
             _playingSound = soundName;
           });
         } catch (_) {}
+      } else {
+        final path = sl<SoundService>().getSoundAssetPath(soundName);
+        if (path.isNotEmpty) {
+          try {
+            await _player.play(AssetSource(path));
+            setState(() {
+              _playingSound = soundName;
+            });
+          } catch (_) {}
+        }
       }
     }
   }
@@ -144,7 +176,34 @@ class _NotificationSoundPageState extends State<NotificationSoundPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // ─── Create Custom Sound Button ───
+            OutlinedButton.icon(
+              onPressed: () async {
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => const PianoRecorderDialog(),
+                );
+                if (result == true) {
+                  _loadSounds();
+                }
+              },
+              icon: const Text('🎹', style: TextStyle(fontSize: 20)),
+              label: Text(
+                'Record Custom Sound',
+                style: AppTypography.h3(color: primary),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                side: BorderSide(color: primary, width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // ─── Sound List ───
             ..._soundOptions.map((opt) {
