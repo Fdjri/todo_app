@@ -34,7 +34,7 @@ class AlarmService {
     // Init timezone data
     tz_data.initializeTimeZones();
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     await _plugin.initialize(
       const InitializationSettings(android: androidInit),
       onDidReceiveNotificationResponse: _handleNotificationResponse,
