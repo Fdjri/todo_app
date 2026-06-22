@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -35,6 +39,9 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  final _player = AudioPlayer();
+  Timer? _hapticTimer;
+
   @override
   void initState() {
     super.initState();
@@ -60,14 +67,62 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
       curve: Curves.easeOutCubic,
     );
 
-    // Play alarm sound
-    sl<SoundService>().playLevelUp();
+    // Play alarm sound and start vibration
+    _startRing();
+  }
+
+  Future<void> _startRing() async {
+    try {
+      final selectedSound = sl<SoundService>().getSelectedSound();
+      if (selectedSound != 'None') {
+        final path = sl<SoundService>().getSoundAssetPath(selectedSound);
+        if (path.isNotEmpty) {
+          await _player.setReleaseMode(ReleaseMode.loop);
+          await _player.play(AssetSource(path));
+        }
+      }
+    } catch (_) {}
+
+    // Start vibration pattern loop
+    try {
+      final hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator) {
+        Vibration.vibrate(
+          pattern: [0, 600, 400, 600, 400, 600, 1000],
+          intensities: [0, 200, 0, 200, 0, 200, 0],
+          repeat: 0, // repeat from index 0
+        );
+      }
+    } catch (_) {
+      _startHapticFallback();
+    }
+  }
+
+  void _startHapticFallback() {
+    _hapticTimer = Timer.periodic(const Duration(seconds: 2), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      HapticFeedback.heavyImpact();
+    });
+  }
+
+  Future<void> _stopAlarm() async {
+    try {
+      await _player.stop();
+      Vibration.cancel();
+      _hapticTimer?.cancel();
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _fadeController.dispose();
+    _player.dispose();
+    _hapticTimer?.cancel();
+    Vibration.cancel();
     super.dispose();
   }
 
@@ -81,185 +136,182 @@ class _AlarmScreenPageState extends State<AlarmScreenPage>
         .withLightness((HSLColor.fromColor(primary).lightness - 0.15).clamp(0.0, 1.0))
         .toColor();
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              primaryDarker,
-              bg,
-            ],
+    return PopScope(
+      canPop: false, // prevent back-button dismiss to enforce snooze/done action
+      child: Scaffold(
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                primaryDarker,
+                bg,
+              ],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 2),
+          child: SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 2),
 
-                // ─── Pulsing alarm icon with Lottie ───
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      width: 160,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: primary
-                                .withValues(alpha: _pulseAnimation.value * 0.5),
-                            blurRadius: 40 * _pulseAnimation.value,
-                            spreadRadius: 10 * _pulseAnimation.value,
-                          ),
-                        ],
-                      ),
-                      child: Lottie.asset(
-                        'assets/lottie/alarm_pulse.json',
-                        repeat: true,
-                        fit: BoxFit.contain,
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 32),
-
-                // ─── "It's time, bestie!" ───
-                Text(
-                  "It's time, bestie!",
-                  style: AppTypography.quoteLarge(
-                    color: Colors.white.withValues(alpha: 0.95),
+                  // ─── Pulsing alarm icon with Lottie ───
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: primary
+                                  .withValues(alpha: _pulseAnimation.value * 0.5),
+                              blurRadius: 40 * _pulseAnimation.value,
+                              spreadRadius: 10 * _pulseAnimation.value,
+                            ),
+                          ],
+                        ),
+                        child: Lottie.asset(
+                          'assets/lottie/alarm_pulse.json',
+                          repeat: true,
+                          fit: BoxFit.contain,
+                        ),
+                      );
+                    },
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-                // ─── Task title ───
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    '"${widget.taskTitle}"',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.h1(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // ─── Category + time ───
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${widget.categoryEmoji} ${widget.categoryName}',
-                      style: AppTypography.body(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (widget.dueTimeText != null) ...[
-                  const SizedBox(height: 4),
+                  // ─── "It's time, bestie!" ───
                   Text(
-                    widget.dueTimeText!,
-                    style: AppTypography.caption(
-                      color: Colors.white.withValues(alpha: 0.6),
+                    "It's time, bestie!",
+                    style: AppTypography.quoteLarge(
+                      color: Colors.white.withValues(alpha: 0.95),
                     ),
                   ),
-                ],
 
-                const Spacer(flex: 2),
+                  const SizedBox(height: 24),
 
-                // ─── Action buttons ───
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
+                  // ─── Task title ───
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      '"${widget.taskTitle}"',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.h1(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ─── Category + time ───
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Mark Done button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            sl<SoundService>().playTaskComplete();
-                            Navigator.pop(context, 'done');
-                          },
-                          icon: const Text('✅', style: TextStyle(fontSize: 20)),
-                          label: Text(
-                            'Mark Done',
-                            style: AppTypography.h3(color: Colors.white),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: isDark
-                                ? AppColors.successDark
-                                : AppColors.successLight,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Snooze button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context, 'snooze');
-                          },
-                          icon: const Text('⏰', style: TextStyle(fontSize: 20)),
-                          label: Text(
-                            'Snooze (15m)',
-                            style: AppTypography.h3(
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Dismiss link
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, 'dismiss'),
-                        child: Text(
-                          'Dismiss',
-                          style: AppTypography.body(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
+                      Text(
+                        '${widget.categoryEmoji} ${widget.categoryName}',
+                        style: AppTypography.body(
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                const Spacer(),
-              ],
+                  if (widget.dueTimeText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.dueTimeText!,
+                      style: AppTypography.caption(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+
+                  const Spacer(flex: 2),
+
+                  // ─── Action buttons ───
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      children: [
+                        // Mark Done button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: FilledButton.icon(
+                            onPressed: () async {
+                              await _stopAlarm();
+                              sl<SoundService>().playTaskComplete();
+                              if (context.mounted) {
+                                Navigator.pop(context, 'done');
+                              }
+                            },
+                            icon: const Text('✅', style: TextStyle(fontSize: 20)),
+                            label: Text(
+                              'Mark Done',
+                              style: AppTypography.h3(color: Colors.white),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: isDark
+                                  ? AppColors.successDark
+                                  : AppColors.successLight,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Snooze button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              await _stopAlarm();
+                              if (context.mounted) {
+                                Navigator.pop(context, 'snooze');
+                              }
+                            },
+                            icon: const Text('⏰', style: TextStyle(fontSize: 20)),
+                            label: Text(
+                              'Snooze (15m)',
+                              style: AppTypography.h3(
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+
+                  const Spacer(),
+                ],
+              ),
             ),
           ),
         ),

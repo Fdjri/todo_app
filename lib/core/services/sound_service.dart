@@ -1,5 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_assets.dart';
+import '../../injection_container.dart';
 
 /// Singleton service for playing sound effects
 class SoundService {
@@ -12,8 +14,39 @@ class SoundService {
 
   bool get isEnabled => _enabled;
 
+  static const String _soundPrefKey = 'notification_sound';
+
   void setEnabled(bool enabled) {
     _enabled = enabled;
+  }
+
+  String getSelectedSound() {
+    try {
+      final prefs = sl<SharedPreferences>();
+      return prefs.getString(_soundPrefKey) ?? 'Soft Chime';
+    } catch (_) {
+      return 'Soft Chime';
+    }
+  }
+
+  Future<void> setSelectedSound(String soundName) async {
+    try {
+      final prefs = sl<SharedPreferences>();
+      await prefs.setString(_soundPrefKey, soundName);
+    } catch (_) {}
+  }
+
+  String getSoundAssetPath(String soundName) {
+    switch (soundName) {
+      case 'Soft Chime':
+        return AppAssets.soundSoftChime;
+      case 'Gentle Bell':
+        return AppAssets.soundGentleBell;
+      case 'Sparkle':
+        return AppAssets.soundSparkle;
+      default:
+        return '';
+    }
   }
 
   Future<void> playTaskComplete() async {
@@ -32,10 +65,28 @@ class SoundService {
     await _play(AppAssets.soundDelete);
   }
 
+  Future<void> playPreview(String soundName) async {
+    if (!_enabled) return;
+    final assetPath = getSoundAssetPath(soundName);
+    if (assetPath.isEmpty) return;
+    try {
+      await _player.stop();
+      await _player.setReleaseMode(ReleaseMode.release);
+      await _player.play(AssetSource(assetPath));
+    } catch (_) {}
+  }
+
+  Future<void> stop() async {
+    try {
+      await _player.stop();
+    } catch (_) {}
+  }
+
   Future<void> _play(String assetPath) async {
     if (!_enabled) return;
     try {
       await _player.stop();
+      await _player.setReleaseMode(ReleaseMode.release);
       await _player.play(AssetSource(assetPath));
     } catch (_) {
       // Silently handle missing sound files

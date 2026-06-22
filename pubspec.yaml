@@ -56,6 +56,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
@@ -63,3 +65,17 @@ flutter:
     - assets/lottie/
     - assets/sounds/
     - assets/images/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/images/splash.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FDF6F8"
+  image: "assets/images/splash.png"
+  color_dark: "#1A0F12"
+  image_dark: "assets/images/splash.png"
+  android: true
+  ios: false

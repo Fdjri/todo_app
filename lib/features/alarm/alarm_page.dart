@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vibration/vibration.dart';
 
-import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/services/alarm_service.dart';
+import '../../core/services/sound_service.dart';
+import '../../injection_container.dart';
 
 /// Full-screen alarm page shown when a task alarm fires.
 /// - Rings continuously (audioplayers loop) + vibrates
@@ -59,8 +60,14 @@ class _AlarmPageState extends State<AlarmPage>
 
   Future<void> _startRing() async {
     try {
-      await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource(AppAssets.soundAlarm));
+      final selectedSound = sl<SoundService>().getSelectedSound();
+      if (selectedSound != 'None') {
+        final path = sl<SoundService>().getSoundAssetPath(selectedSound);
+        if (path.isNotEmpty) {
+          await _player.setReleaseMode(ReleaseMode.loop);
+          await _player.play(AssetSource(path));
+        }
+      }
     } catch (_) {}
 
     // Start vibration pattern loop
