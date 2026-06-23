@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
-import '../../core/widgets/neon_navbar.dart';
-import '../../core/widgets/confetti_overlay.dart';
+import 'neon_navbar.dart';
+import 'confetti_overlay.dart';
 import '../../features/task/presentation/bloc/task_bloc.dart';
 import '../../features/task/presentation/pages/home_page.dart';
 import '../../features/task/presentation/pages/add_task_page.dart';
 import '../../features/category/presentation/bloc/category_bloc.dart';
 import '../../features/gamification/presentation/bloc/gamification_bloc.dart';
-import 'history_page.dart';
-import 'settings_page.dart';
+import '../../features/calendar/presentation/pages/calendar_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 
 /// Root shell that holds the 3-tab navigation (Home / History / Settings)
 /// with a shared neon navbar and FAB.
@@ -54,7 +54,7 @@ class _MainShellState extends State<MainShell> {
           onShowAddTask: _showAddTask,
         );
       case 1:
-        return const HistoryPage();
+        return const CalendarPage();
       case 2:
         return const SettingsPage();
       default:

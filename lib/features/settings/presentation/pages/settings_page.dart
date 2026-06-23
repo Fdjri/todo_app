@@ -3,11 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
-import '../../core/constants/app_typography.dart';
-import '../../core/theme/theme_bloc.dart';
-import '../../core/widgets/bow_divider.dart';
-import '../core/services/sound_service.dart';
-import '../injection_container.dart';
+import '../../../../core/constants/app_typography.dart';
+import '../../../../core/theme/theme_bloc.dart';
+import '../../../../core/widgets/bow_divider.dart';
+import '../../../../core/services/sound_service.dart';
+import '../../../../injection_container.dart';
+import '../cubit/settings_cubit.dart';
 import 'notification_sound_page.dart';
 
 /// Settings page — Midnight Coquette dark toggle, theme color selection,
@@ -20,8 +21,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _dailyReminders = true;
-  bool _urgentAlarms = true;
   String _notificationSound = 'Soft Chime';
 
   @override
@@ -40,6 +39,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
+        return BlocBuilder<SettingsCubit, SettingsState>(
+          builder: (context, settingsState) {
         final theme = Theme.of(context);
         final isDark = themeState.isDarkMode;
         final bg = theme.scaffoldBackgroundColor;
@@ -139,10 +140,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         _buildToggleRow(
                           icon: Icons.notifications_rounded,
                           label: 'Daily Reminders',
-                          value: _dailyReminders,
+                          value: settingsState.dailyReminders,
                           textPrimary: textPrimary,
                           primary: primary,
-                          onChanged: (v) => setState(() => _dailyReminders = v),
+                          onChanged: (v) => context.read<SettingsCubit>().toggleDailyReminders(v),
                         ),
 
                         _buildDivider(textHint),
@@ -152,11 +153,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           icon: Icons.priority_high_rounded,
                           label: 'Urgent Alarms',
                           subtitle: 'For high priority tasks, bestie!',
-                          value: _urgentAlarms,
+                          value: settingsState.urgentAlarms,
                           textPrimary: textPrimary,
                           textHint: textHint,
                           primary: primary,
-                          onChanged: (v) => setState(() => _urgentAlarms = v),
+                          onChanged: (v) => context.read<SettingsCubit>().toggleUrgentAlarms(v),
                         ),
 
                         _buildDivider(textHint),
@@ -198,6 +199,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
+        );
+          },
         );
       },
     );

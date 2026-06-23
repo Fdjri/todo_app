@@ -59,6 +59,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  void _showEditTask(BuildContext context, TaskEntity task) {
+    shadcn.openDrawer(
+      context: context,
+      position: shadcn.OverlayPosition.bottom,
+      builder: (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: context.read<TaskBloc>()),
+          BlocProvider.value(value: context.read<CategoryBloc>()),
+        ],
+        child: AddTaskPage(taskToEdit: task),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -543,9 +557,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (category != null)
+                        if (category != null) ...[
                           Text(category.emoji,
                               style: const TextStyle(fontSize: 18)),
+                          const SizedBox(width: 8),
+                        ],
+                        GestureDetector(
+                          onTap: () => _showEditTask(context, task),
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
 

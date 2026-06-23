@@ -69,8 +69,8 @@ class NeonNavBar extends StatelessWidget {
                 surface: background,
               ),
               _NavItem(
-                icon: Icons.history_rounded,
-                label: 'History',
+                icon: Icons.calendar_month_rounded,
+                label: 'Calendar',
                 isActive: currentIndex == 1,
                 activeColor: primary,
                 inactiveColor: textHint,

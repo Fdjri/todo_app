@@ -11,8 +11,10 @@ import 'core/widgets/permission_onboarding_dialog.dart';
 import 'features/task/presentation/bloc/task_bloc.dart';
 import 'features/category/presentation/bloc/category_bloc.dart';
 import 'features/gamification/presentation/bloc/gamification_bloc.dart';
-import 'features/alarm/alarm_page.dart';
-import 'presentation/main_shell.dart';
+import 'features/alarm/presentation/pages/alarm_page.dart';
+import 'features/settings/presentation/cubit/settings_cubit.dart';
+import 'features/calendar/presentation/cubit/calendar_cubit.dart';
+import 'core/widgets/main_shell.dart';
 
 class WorkaholicApp extends StatefulWidget {
   /// If the app was cold-started by tapping an alarm notification,
@@ -39,6 +41,8 @@ class _WorkaholicAppState extends State<WorkaholicApp> {
         BlocProvider(create: (_) => sl<TaskBloc>()..add(LoadTasks())),
         BlocProvider(create: (_) => sl<CategoryBloc>()..add(LoadCategories())),
         BlocProvider(create: (_) => sl<GamificationBloc>()..add(LoadStats())),
+        BlocProvider(create: (_) => sl<SettingsCubit>()),
+        BlocProvider(create: (_) => sl<CalendarCubit>()),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {

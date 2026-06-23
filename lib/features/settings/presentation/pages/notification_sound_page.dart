@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import '../core/constants/app_typography.dart';
-import '../core/services/sound_service.dart';
-import '../injection_container.dart';
-import 'widgets/piano_recorder_dialog.dart';
+import '../../../../core/constants/app_typography.dart';
+import '../../../../core/services/sound_service.dart';
+import '../../../../injection_container.dart';
+import '../widgets/piano_recorder_dialog.dart';
 
 class NotificationSoundPage extends StatefulWidget {
   const NotificationSoundPage({super.key});

@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_typography.dart';
-import '../../core/services/sound_service.dart';
-import '../../injection_container.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_typography.dart';
+import '../../../../core/services/sound_service.dart';
+import '../../../../injection_container.dart';
 
 class PianoSynth {
   static final Map<String, double> noteFreqs = {

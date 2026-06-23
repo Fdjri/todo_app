@@ -165,6 +165,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
       await repository.updateTask(event.task);
+      // Cancel previous alarm
+      await AlarmService().cancelAlarm(event.task.id);
+      // Reschedule alarm if needed
+      if (event.task.hasAlarm && event.task.dueDate != null && !event.task.isCompleted) {
+        await AlarmService().scheduleAlarm(event.task);
+      }
       if (state is TaskLoaded) {
         add(FilterByCategory((state as TaskLoaded).activeCategoryId));
       } else {
@@ -197,6 +203,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       // If task just became completed, cancel its alarm
       if (updated.isCompleted) {
         await AlarmService().cancelAlarm(event.taskId);
+      } else {
+        // If task became incomplete, reschedule alarm if needed
+        if (updated.hasAlarm && updated.dueDate != null) {
+          await AlarmService().scheduleAlarm(updated);
+        }
       }
       final allTasks = await repository.getAllTasks();
       final currentState = state;

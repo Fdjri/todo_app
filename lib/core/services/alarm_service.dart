@@ -97,30 +97,62 @@ class AlarmService {
     // Skip if already in the past
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    await _plugin.zonedSchedule(
-      _notifId(task.id),
-      '⏰ ${task.title}',
-      "Time for your task, bestie! Swipe to dismiss ✨",
-      scheduledDate,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          importance: Importance.max,
-          priority: Priority.max,
-          fullScreenIntent: true,
-          category: AndroidNotificationCategory.alarm,
-          autoCancel: false,
-          ongoing: true,
-          vibrationPattern: Int64List.fromList(
-              [0, 500, 300, 500, 300, 500, 300, 500]),
+    try {
+      await _plugin.zonedSchedule(
+        _notifId(task.id),
+        '⏰ ${task.title}',
+        "Time for your task, bestie! Swipe to dismiss ✨",
+        scheduledDate,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            importance: Importance.max,
+            priority: Priority.max,
+            fullScreenIntent: true,
+            category: AndroidNotificationCategory.alarm,
+            autoCancel: false,
+            ongoing: true,
+            vibrationPattern: Int64List.fromList(
+                [0, 500, 300, 500, 300, 500, 300, 500]),
+          ),
         ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('[AlarmService] Failed to schedule exact alarm: $e. Falling back to inexact.');
+      try {
+        await _plugin.zonedSchedule(
+          _notifId(task.id),
+          '⏰ ${task.title}',
+          "Time for your task, bestie! Swipe to dismiss ✨",
+          scheduledDate,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              importance: Importance.max,
+              priority: Priority.max,
+              fullScreenIntent: true,
+              category: AndroidNotificationCategory.alarm,
+              autoCancel: false,
+              ongoing: true,
+              vibrationPattern: Int64List.fromList(
+                  [0, 500, 300, 500, 300, 500, 300, 500]),
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+      } catch (innerErr) {
+        debugPrint('[AlarmService] Failed to schedule fallback inexact alarm: $innerErr');
+      }
+    }
 
     debugPrint('[AlarmService] Scheduled alarm for "${task.title}" at $scheduledDate');
   }
@@ -146,30 +178,62 @@ class AlarmService {
     final scheduledDate = tz.TZDateTime.from(scheduledAt, tz.local);
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    await _plugin.zonedSchedule(
-      _notifId(taskId),
-      '⏰ $taskTitle',
-      "Your snoozed alarm is ready, bestie! ✨",
-      scheduledDate,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          importance: Importance.max,
-          priority: Priority.max,
-          fullScreenIntent: true,
-          category: AndroidNotificationCategory.alarm,
-          autoCancel: false,
-          ongoing: true,
-          vibrationPattern: Int64List.fromList(
-              [0, 500, 300, 500, 300, 500, 300, 500]),
+    try {
+      await _plugin.zonedSchedule(
+        _notifId(taskId),
+        '⏰ $taskTitle',
+        "Your snoozed alarm is ready, bestie! ✨",
+        scheduledDate,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            importance: Importance.max,
+            priority: Priority.max,
+            fullScreenIntent: true,
+            category: AndroidNotificationCategory.alarm,
+            autoCancel: false,
+            ongoing: true,
+            vibrationPattern: Int64List.fromList(
+                [0, 500, 300, 500, 300, 500, 300, 500]),
+          ),
         ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('[AlarmService] Failed to schedule raw exact alarm: $e. Falling back to inexact.');
+      try {
+        await _plugin.zonedSchedule(
+          _notifId(taskId),
+          '⏰ $taskTitle',
+          "Your snoozed alarm is ready, bestie! ✨",
+          scheduledDate,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              importance: Importance.max,
+              priority: Priority.max,
+              fullScreenIntent: true,
+              category: AndroidNotificationCategory.alarm,
+              autoCancel: false,
+              ongoing: true,
+              vibrationPattern: Int64List.fromList(
+                  [0, 500, 300, 500, 300, 500, 300, 500]),
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+      } catch (innerErr) {
+        debugPrint('[AlarmService] Failed to schedule fallback raw inexact alarm: $innerErr');
+      }
+    }
   }
 
   // ─── Check launch from notification ──────────────────────────────────────

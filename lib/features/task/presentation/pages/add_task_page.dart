@@ -13,7 +13,8 @@ import '../bloc/task_bloc.dart';
 import '../../../../core/widgets/shining_effect.dart';
 
 class AddTaskPage extends StatefulWidget {
-  const AddTaskPage({super.key});
+  final TaskEntity? taskToEdit;
+  const AddTaskPage({super.key, this.taskToEdit});
 
   @override
   State<AddTaskPage> createState() => _AddTaskPageState();
@@ -30,6 +31,24 @@ class _AddTaskPageState extends State<AddTaskPage> {
   TimeOfDay? _dueTime;
   bool _hasAlarm = false;
   final List<SubTaskEntity> _subTasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.taskToEdit != null) {
+      final task = widget.taskToEdit!;
+      _titleController.text = task.title;
+      _descController.text = task.description ?? '';
+      _selectedCategoryId = task.categoryId;
+      _selectedPriority = task.priority;
+      _hasAlarm = task.hasAlarm;
+      _subTasks.addAll(task.subTasks);
+      if (task.dueDate != null) {
+        _dueDate = task.dueDate;
+        _dueTime = TimeOfDay.fromDateTime(task.dueDate!);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -67,21 +86,35 @@ class _AddTaskPageState extends State<AddTaskPage> {
       );
     }
 
-    final task = TaskEntity(
-      id: IdGenerator.generate(),
-      title: _titleController.text.trim(),
-      description: _descController.text.trim().isEmpty
-          ? null
-          : _descController.text.trim(),
-      categoryId: _selectedCategoryId,
-      priority: _selectedPriority,
-      dueDate: fullDueDate,
-      createdAt: DateTime.now(),
-      subTasks: _subTasks,
-      hasAlarm: _hasAlarm,
-    );
-
-    context.read<TaskBloc>().add(AddTask(task));
+    if (widget.taskToEdit != null) {
+      final task = widget.taskToEdit!.copyWith(
+        title: _titleController.text.trim(),
+        description: _descController.text.trim().isEmpty
+            ? null
+            : _descController.text.trim(),
+        categoryId: _selectedCategoryId,
+        priority: _selectedPriority,
+        dueDate: fullDueDate,
+        subTasks: _subTasks,
+        hasAlarm: _hasAlarm,
+      );
+      context.read<TaskBloc>().add(UpdateTask(task));
+    } else {
+      final task = TaskEntity(
+        id: IdGenerator.generate(),
+        title: _titleController.text.trim(),
+        description: _descController.text.trim().isEmpty
+            ? null
+            : _descController.text.trim(),
+        categoryId: _selectedCategoryId,
+        priority: _selectedPriority,
+        dueDate: fullDueDate,
+        createdAt: DateTime.now(),
+        subTasks: _subTasks,
+        hasAlarm: _hasAlarm,
+      );
+      context.read<TaskBloc>().add(AddTask(task));
+    }
     shadcn.closeOverlay(context);
   }
 
@@ -103,7 +136,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
           children: [
             // Title
             Text(
-              '✨ New Task',
+              widget.taskToEdit != null ? '✨ Edit Task' : '✨ New Task',
               style: AppTypography.h1(color: theme.colorScheme.primary),
             ),
 
@@ -313,7 +346,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   onPressed: _submit,
                   alignment: Alignment.center,
                   child: Text(
-                    '✨ Add Task ✨',
+                    widget.taskToEdit != null ? '✨ Save Task ✨' : '✨ Add Task ✨',
                     style: AppTypography.h3(color: theme.colorScheme.onPrimary),
                   ),
                 ),

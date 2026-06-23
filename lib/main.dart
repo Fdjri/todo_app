@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'injection_container.dart';
 import 'core/services/alarm_service.dart';
-import 'features/alarm/alarm_page.dart';
+import 'features/alarm/presentation/pages/alarm_page.dart';
 import 'app.dart';
 
 /// Global navigator key used by AlarmService to navigate from background

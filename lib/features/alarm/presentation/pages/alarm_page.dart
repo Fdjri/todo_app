@@ -1,19 +1,20 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vibration/vibration.dart';
 
-import '../task/presentation/bloc/task_bloc.dart';
-import '../gamification/presentation/bloc/gamification_bloc.dart';
+import '../../../task/presentation/bloc/task_bloc.dart';
+import '../../../gamification/presentation/bloc/gamification_bloc.dart';
 
-import '../../core/constants/app_assets.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_typography.dart';
-import '../../core/services/alarm_service.dart';
-import '../../core/services/sound_service.dart';
-import '../../injection_container.dart';
+import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_typography.dart';
+import '../../../../core/services/alarm_service.dart';
+import '../../../../core/services/sound_service.dart';
+import '../../../../injection_container.dart';
 
 /// Full-screen alarm page shown when a task alarm fires.
 /// - Rings continuously (audioplayers loop) + vibrates
@@ -255,40 +256,52 @@ class _AlarmPageState extends State<AlarmPage>
 
                     const Spacer(),
 
-                    // ── Pulse icon ──
-                    ScaleTransition(
-                      scale: _pulseAnim,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              primary.withValues(alpha: 0.6),
-                              primary.withValues(alpha: 0.1),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  primary.withValues(alpha: 0.55),
-                              blurRadius: 32,
-                              spreadRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: ClipOval(
-                            child: Image.asset(
-                              AppAssets.imageFernSpin,
-                              width: 86,
-                              height: 86,
-                              fit: BoxFit.cover,
-                            ),
+                    // ── Pulse icon + Fireworks ──
+                    Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Positioned(
+                          child: _FireworksWidget(
+                            width: 320,
+                            height: 320,
                           ),
                         ),
-                      ),
+                        ScaleTransition(
+                          scale: _pulseAnim,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  primary.withValues(alpha: 0.6),
+                                  primary.withValues(alpha: 0.1),
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      primary.withValues(alpha: 0.55),
+                                  blurRadius: 32,
+                                  spreadRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: ClipOval(
+                                child: Image.asset(
+                                  AppAssets.imageFernSpin,
+                                  width: 86,
+                                  height: 86,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 32),
@@ -450,3 +463,154 @@ class _SwipeHint extends StatelessWidget {
 
 /// Result returned by AlarmPage when popped.
 enum AlarmResult { done, snoozed }
+
+class _FireworkParticle {
+  double x, y;
+  double vx, vy;
+  double size;
+  Color color;
+  double opacity;
+  double life; // 1.0 down to 0.0
+
+  _FireworkParticle({
+    required this.x,
+    required this.y,
+    required this.vx,
+    required this.vy,
+    required this.size,
+    required this.color,
+  })  : opacity = 1.0,
+        life = 1.0;
+}
+
+class _FireworkExplosion {
+  final List<_FireworkParticle> particles;
+  _FireworkExplosion(this.particles);
+}
+
+class _FireworksWidget extends StatefulWidget {
+  final double width;
+  final double height;
+
+  const _FireworksWidget({
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  State<_FireworksWidget> createState() => _FireworksWidgetState();
+}
+
+class _FireworksWidgetState extends State<_FireworksWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  final List<_FireworkExplosion> _explosions = [];
+  final Random _random = Random();
+  DateTime _lastExplosionTime = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..addListener(_updateParticles)..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _updateParticles() {
+    if (!mounted) return;
+
+    final now = DateTime.now();
+    // Trigger explosion every 1.2s
+    if (now.difference(_lastExplosionTime).inMilliseconds > 1200) {
+      _triggerExplosion();
+      _lastExplosionTime = now;
+    }
+
+    setState(() {
+      for (final explosion in _explosions) {
+        for (final p in explosion.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          // Apply gravity
+          p.vy += 0.07;
+          // Apply resistance
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+          // Fade life
+          p.life -= 0.02;
+          p.opacity = p.life.clamp(0.0, 1.0);
+        }
+        explosion.particles.removeWhere((p) => p.life <= 0);
+      }
+      _explosions.removeWhere((e) => e.particles.isEmpty);
+    });
+  }
+
+  void _triggerExplosion() {
+    // Coquette palette colors (pastel pink, gold, pastel blue, error/rose, light pink)
+    final colors = [
+      const Color(0xFFE8A0BF), // primary light pink
+      const Color(0xFFD4B87A), // gold accent
+      const Color(0xFF7BA3CC), // info dark blue
+      const Color(0xFFFFF0F5), // white pink
+      const Color(0xFFCF6679), // error/rose
+    ];
+
+    final numParticles = 25 + _random.nextInt(15);
+    final List<_FireworkParticle> list = [];
+
+    // Center coordinates
+    final cx = widget.width / 2;
+    final cy = widget.height / 2;
+
+    for (int i = 0; i < numParticles; i++) {
+      final angle = _random.nextDouble() * 2 * pi;
+      final speed = 1.0 + _random.nextDouble() * 4.5;
+      list.add(_FireworkParticle(
+        x: cx,
+        y: cy,
+        vx: cos(angle) * speed,
+        vy: sin(angle) * speed,
+        size: 2.0 + _random.nextDouble() * 3.5,
+        color: colors[_random.nextInt(colors.length)],
+      ));
+    }
+    _explosions.add(_FireworkExplosion(list));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(widget.width, widget.height),
+      painter: _FireworksPainter(_explosions),
+    );
+  }
+}
+
+class _FireworksPainter extends CustomPainter {
+  final List<_FireworkExplosion> explosions;
+
+  _FireworksPainter(this.explosions);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    for (final explosion in explosions) {
+      for (final p in explosion.particles) {
+        paint.color = p.color.withValues(alpha: p.opacity);
+        canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
