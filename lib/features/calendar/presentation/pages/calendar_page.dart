@@ -99,10 +99,13 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
     return _indonesianHolidays[key] ?? [];
   }
 
-  void _onDateTap(BuildContext cellContext, DateTime date) {
+  void _onDateSelect(DateTime date) {
     setState(() {
       _selectedDate = date;
     });
+  }
+
+  void _showPopoverForDate(BuildContext cellContext, DateTime date) {
     if (_monthMode == MonthMode.badges) {
       // Check if this date has events or tasks
       final holidays = _getHolidaysForDate(date);
@@ -121,12 +124,14 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
         Alignment alignment = Alignment.bottomCenter; // default: popover is above cell
         Alignment anchorAlignment = Alignment.topCenter;
 
+        bool floatUp = true;
         if (renderBox != null) {
           final position = renderBox.localToGlobal(Offset.zero);
           // If the cell is in the upper part of the screen, show popover below it
           if (position.dy < 310.0) {
             alignment = Alignment.topCenter;
             anchorAlignment = Alignment.bottomCenter;
+            floatUp = false;
           }
         }
 
@@ -134,8 +139,15 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
           context: cellContext,
           alignment: alignment,
           anchorAlignment: anchorAlignment,
+          handler: const shadcn.PopoverOverlayHandler(), // Bypass mobile drawer fallback
           builder: (popoverContext) {
-            return _buildPopoverContent(popoverContext, date);
+            return _FloatingPopoverWrapper(
+              floatUp: floatUp,
+              child: PopoverContainer(
+                arrowAtBottom: floatUp,
+                child: _buildPopoverContent(popoverContext, date),
+              ),
+            );
           },
         );
       }
@@ -445,7 +457,8 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                                 month: month,
                                 selectedDate: _selectedDate,
                                 allTasks: allTasks,
-                                onDateTap: _onDateTap,
+                                onDateSelect: _onDateSelect,
+                                onBadgeTap: _showPopoverForDate,
                                 isDark: isDark,
                                 calendarHeight: displayHeight,
                                 expandProgress: expandProgress,
@@ -579,7 +592,8 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                       badges: const [], // No badges in week row view
                       hasEvents: hasEvents,
                       expandProgress: 0.0, // Collasped in week row view
-                      onTap: _onDateTap,
+                      onSelect: _onDateSelect,
+                      onBadgeTap: _showPopoverForDate,
                     ),
                   );
                 }).toList(),
@@ -628,6 +642,14 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                 final isToday = date.day == DateTime.now().day &&
                     date.month == DateTime.now().month &&
                     date.year == DateTime.now().year;
+                final holidays = _getHolidaysForDate(date);
+                final dayTasks = allTasks.where((t) {
+                  if (t.dueDate == null) return false;
+                  return t.dueDate!.year == date.year &&
+                      t.dueDate!.month == date.month &&
+                      t.dueDate!.day == date.day;
+                }).toList();
+                final hasEvents = holidays.isNotEmpty || dayTasks.isNotEmpty;
 
                 final weekdayLabel = DateFormat('E').format(date).toUpperCase();
 
@@ -675,6 +697,19 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                                   : onSurface.withValues(alpha: 0.85),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: hasEvents
+                                  ? (isSelected
+                                      ? theme.colorScheme.onPrimary
+                                      : primary)
+                                  : Colors.transparent,
                             ),
                           ),
                         ],
@@ -732,7 +767,7 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                 ),
                 icon: const Icon(Icons.note_add_rounded),
                 label: const Text('Add Daily Note'),
-                onPressed: () => _openNoteDetailPage(targetDate, null),
+                onPressed: () => _openNoteDetailPage(context, targetDate, null),
               ),
           ],
         ),
@@ -760,7 +795,7 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                   ),
                   subtitle: Text('All day', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
                   onTap: () {
-                    _openHolidayDetailPage(targetDate, h['title'] ?? '', h['desc'] ?? '');
+                    _openHolidayDetailPage(context, targetDate, h['title'] ?? '', h['desc'] ?? '');
                   },
                 ),
               );
@@ -804,7 +839,7 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                       ? const Icon(Icons.check_circle, color: AppColors.successDark)
                       : null,
                   onTap: () {
-                    _openTaskDetailPage(t);
+                    _openTaskDetailPage(context, t);
                   },
                 ),
               );
@@ -1085,7 +1120,7 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                 style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
               ),
               onTap: () {
-                _openHolidayDetailPage(targetDate, h['title'] ?? '', h['desc'] ?? '');
+                _openHolidayDetailPage(context, targetDate, h['title'] ?? '', h['desc'] ?? '');
               },
             ),
           );
@@ -1121,7 +1156,7 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
                 style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 12),
               ),
               onTap: () {
-                _openTaskDetailPage(t);
+                _openTaskDetailPage(context, t);
               },
             ),
           );
@@ -1131,14 +1166,14 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
   }
 
   Widget _buildPopoverContent(BuildContext popoverContext, DateTime date) {
-    final theme = Theme.of(context);
+    final theme = Theme.of(popoverContext);
     final primary = theme.colorScheme.primary;
     final onSurface = theme.colorScheme.onSurface;
 
     final dateLabel = DateFormat('M/d EEE').format(date);
     final holidays = _getHolidaysForDate(date);
     
-    final taskState = context.read<TaskBloc>().state;
+    final taskState = popoverContext.read<TaskBloc>().state;
     final allTasks = taskState is TaskLoaded ? taskState.allTasks : <TaskEntity>[];
     
     final dayTasks = allTasks.where((t) {
@@ -1150,112 +1185,103 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        width: 260,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.45 : 0.12),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-          ],
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                dateLabel,
-                style: TextStyle(
-                  color: onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              dateLabel,
+              style: TextStyle(
+                color: onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
-            Divider(color: theme.colorScheme.outlineVariant, height: 1),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 180),
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                children: [
-                  ...holidays.map((h) => ListTile(
-                        visualDensity: VisualDensity.compact,
-                        dense: true,
-                        leading: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: primary),
-                        ),
-                        title: Text(
-                          h['title'] ?? '',
-                          style: TextStyle(color: onSurface, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text('All day', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
-                        onTap: () {
-                          shadcn.closeOverlay(popoverContext);
-                          _openHolidayDetailPage(date, h['title'] ?? '', h['desc'] ?? '');
-                        },
-                      )),
-                  ...dayTasks.map((t) => ListTile(
-                        visualDensity: VisualDensity.compact,
-                        dense: true,
-                        leading: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: t.isCompleted ? AppColors.successDark : _getPriorityColor(t.priority),
-                          ),
-                        ),
-                        title: Text(
-                          t.title,
-                          style: TextStyle(color: onSurface, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          t.dueDate != null ? DateFormat('jm').format(t.dueDate!) : '',
-                          style: TextStyle(color: onSurface.withValues(alpha: 0.6)),
-                        ),
-                        onTap: () {
-                          shadcn.closeOverlay(popoverContext);
-                          _openTaskDetailPage(t);
-                        },
-                      )),
-                  if (holidays.isEmpty && dayTasks.isEmpty)
-                    ListTile(
+          ),
+          Divider(color: theme.colorScheme.outlineVariant, height: 1),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 180),
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              children: [
+                ...holidays.map((h) => ListTile(
+                      visualDensity: VisualDensity.compact,
                       dense: true,
-                      title: Text('No tasks or holidays', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
-                      subtitle: Text('Tap to view daily notes', style: TextStyle(color: primary)),
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: primary),
+                      ),
+                      title: Text(
+                        h['title'] ?? '',
+                        style: TextStyle(color: onSurface, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text('All day', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
                       onTap: () {
                         shadcn.closeOverlay(popoverContext);
-                        _openNoteDetailPage(date, null);
+                        if (context.mounted) {
+                          _openHolidayDetailPage(context, date, h['title'] ?? '', h['desc'] ?? '');
+                        }
                       },
-                    ),
-                ],
-              ),
+                    )),
+                ...dayTasks.map((t) => ListTile(
+                      visualDensity: VisualDensity.compact,
+                      dense: true,
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: t.isCompleted ? AppColors.successDark : _getPriorityColor(t.priority),
+                        ),
+                      ),
+                      title: Text(
+                        t.title,
+                        style: TextStyle(color: onSurface, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        t.dueDate != null ? DateFormat('jm').format(t.dueDate!) : '',
+                        style: TextStyle(color: onSurface.withValues(alpha: 0.6)),
+                      ),
+                      onTap: () {
+                        shadcn.closeOverlay(popoverContext);
+                        if (context.mounted) {
+                          _openTaskDetailPage(context, t);
+                        }
+                      },
+                    )),
+                if (holidays.isEmpty && dayTasks.isEmpty)
+                  ListTile(
+                    dense: true,
+                    title: Text('No tasks or holidays', style: TextStyle(color: onSurface.withValues(alpha: 0.6))),
+                    subtitle: Text('Tap to view daily notes', style: TextStyle(color: primary)),
+                    onTap: () {
+                      shadcn.closeOverlay(popoverContext);
+                      if (context.mounted) {
+                        _openNoteDetailPage(context, date, null);
+                      }
+                    },
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  void _openHolidayDetailPage(DateTime date, String title, String desc) {
+  void _openHolidayDetailPage(BuildContext ctx, DateTime date, String title, String desc) {
     showDialog(
-      context: context,
+      context: ctx,
       builder: (dialogContext) => BlocProvider.value(
-        value: context.read<CalendarCubit>(),
+        value: ctx.read<CalendarCubit>(),
         child: _CalendarEventDetailDialog(
           title: title,
           date: date,
@@ -1266,14 +1292,14 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
     );
   }
 
-  void _openTaskDetailPage(TaskEntity task) {
+  void _openTaskDetailPage(BuildContext ctx, TaskEntity task) {
     showDialog(
-      context: context,
+      context: ctx,
       builder: (dialogContext) => MultiBlocProvider(
         providers: [
-          BlocProvider.value(value: context.read<TaskBloc>()),
-          BlocProvider.value(value: context.read<CategoryBloc>()),
-          BlocProvider.value(value: context.read<CalendarCubit>()),
+          BlocProvider.value(value: ctx.read<TaskBloc>()),
+          BlocProvider.value(value: ctx.read<CategoryBloc>()),
+          BlocProvider.value(value: ctx.read<CalendarCubit>()),
         ],
         child: _CalendarEventDetailDialog(
           title: task.title,
@@ -1286,11 +1312,11 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
     );
   }
 
-  void _openNoteDetailPage(DateTime date, String? initialNote) {
+  void _openNoteDetailPage(BuildContext ctx, DateTime date, String? initialNote) {
     showDialog(
-      context: context,
+      context: ctx,
       builder: (dialogContext) => BlocProvider.value(
-        value: context.read<CalendarCubit>(),
+        value: ctx.read<CalendarCubit>(),
         child: _CalendarEventDetailDialog(
           title: 'Daily Note Summary',
           date: date,
@@ -1309,7 +1335,8 @@ class _MonthView extends StatelessWidget {
   final DateTime month;
   final DateTime? selectedDate;
   final List<TaskEntity> allTasks;
-  final void Function(BuildContext cellContext, DateTime date) onDateTap;
+  final void Function(DateTime date) onDateSelect;
+  final void Function(BuildContext cellContext, DateTime date) onBadgeTap;
   final bool isDark;
   final double calendarHeight;
   final double expandProgress;
@@ -1320,7 +1347,8 @@ class _MonthView extends StatelessWidget {
     required this.month,
     required this.selectedDate,
     required this.allTasks,
-    required this.onDateTap,
+    required this.onDateSelect,
+    required this.onBadgeTap,
     required this.isDark,
     required this.calendarHeight,
     required this.expandProgress,
@@ -1456,7 +1484,7 @@ class _MonthView extends StatelessWidget {
                       }
                     }
 
-                    return _CalendarCellWidget(
+                     return _CalendarCellWidget(
                       date: cellDate,
                       isCurrentMonth: isCurrentMonth,
                       isToday: isToday,
@@ -1465,7 +1493,8 @@ class _MonthView extends StatelessWidget {
                       badges: badges,
                       hasEvents: hasEvents,
                       expandProgress: expandProgress,
-                      onTap: onDateTap,
+                      onSelect: onDateSelect,
+                      onBadgeTap: onBadgeTap,
                     );
                   },
                 ),
@@ -1500,7 +1529,8 @@ class _CalendarCellWidget extends StatelessWidget {
   final List<Map<String, dynamic>> badges;
   final bool hasEvents;
   final double expandProgress;
-  final void Function(BuildContext cellContext, DateTime date) onTap;
+  final void Function(DateTime date) onSelect;
+  final void Function(BuildContext cellContext, DateTime date) onBadgeTap;
 
   const _CalendarCellWidget({
     required this.date,
@@ -1511,7 +1541,8 @@ class _CalendarCellWidget extends StatelessWidget {
     required this.badges,
     required this.hasEvents,
     required this.expandProgress,
-    required this.onTap,
+    required this.onSelect,
+    required this.onBadgeTap,
   });
 
   @override
@@ -1521,52 +1552,63 @@ class _CalendarCellWidget extends StatelessWidget {
     final onSurface = theme.colorScheme.onSurface;
 
     Color textColor = onSurface;
-    if (!isCurrentMonth) {
-      textColor = onSurface.withValues(alpha: 0.22);
-    } else if (isSelected) {
+    if (isToday) {
       textColor = theme.colorScheme.onPrimary;
+    } else if (!isCurrentMonth) {
+      textColor = onSurface.withValues(alpha: 0.22);
     } else if (isWeekend) {
-      textColor = primary; // Pink columns for weekends
+      textColor = primary;
     }
 
+    final decoration = isToday
+        ? BoxDecoration(
+            color: primary,
+            borderRadius: BorderRadius.circular(12),
+          )
+        : (isSelected
+            ? BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: primary, width: 1.5),
+              )
+            : null);
+
     return GestureDetector(
-      onTapDown: (details) => onTap(context, date),
+      onTap: () => onSelect(date),
       child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primary // Active theme primary color background
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: isToday && !isSelected
-              ? Border.all(color: primary, width: 1.5)
-              : null,
-        ),
+        color: Colors.transparent,
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
         child: Stack(
           children: [
-            // Date number aligned to the top center
+            // Date number aligned to the top center inside 38x38 box
             Align(
               alignment: Alignment.topCenter,
-              child: Text(
-                '${date.day}',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              child: Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: decoration,
+                child: Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
-            // Dots/Badges in remaining space below date number text
-            Positioned(
-              top: 20,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: ClipRect(
-                child: Stack(
-                  alignment: Alignment.topCenter,
-                  children: [
-                    if (expandProgress > 0.0)
+            // Dots/Badges in remaining space below date number text container
+            if (expandProgress > 0.0)
+              Positioned(
+                top: 40,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: ClipRect(
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
                       Opacity(
                         opacity: expandProgress,
                         child: OverflowBox(
@@ -1577,49 +1619,63 @@ class _CalendarCellWidget extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: badges.take(2).map((badge) {
                               final isBlue = badge['isBlue'] as bool;
-                              return Container(
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 2),
-                                padding: const EdgeInsets.symmetric(vertical: 1.5, horizontal: 3),
-                                decoration: BoxDecoration(
-                                  color: isBlue
-                                      ? primary // primary color badge
-                                      : onSurface.withValues(alpha: 0.1), // greyish theme badge
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  badge['text'] as String,
-                                  style: TextStyle(
-                                    color: isBlue ? theme.colorScheme.onPrimary : onSurface,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
+                              return GestureDetector(
+                                onTap: () {
+                                  onSelect(date);
+                                  onBadgeTap(context, date);
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 2),
+                                  padding: const EdgeInsets.symmetric(vertical: 1.5, horizontal: 3),
+                                  decoration: BoxDecoration(
+                                    color: isBlue
+                                        ? primary // primary color badge
+                                        : onSurface.withValues(alpha: 0.1), // greyish theme badge
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  child: Text(
+                                    badge['text'] as String,
+                                    style: TextStyle(
+                                      color: isBlue ? theme.colorScheme.onPrimary : onSurface,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               );
                             }).toList(),
                           ),
                         ),
                       ),
-                    if (expandProgress < 1.0 && hasEvents)
-                      Opacity(
-                        opacity: 1.0 - expandProgress,
-                        child: Container(
-                          margin: const EdgeInsets.only(top: 2),
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isSelected ? theme.colorScheme.onPrimary : primary,
-                          ),
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+            // Render the small dot at the bottom of the cell when collapsed
+            if (expandProgress < 1.0 && hasEvents)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 2,
+                child: Opacity(
+                  opacity: 1.0 - expandProgress,
+                  child: Center(
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected ? theme.colorScheme.onPrimary : primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -1967,3 +2023,201 @@ class _CalendarEventDetailDialogState extends State<_CalendarEventDetailDialog> 
     );
   }
 }
+
+// ─── Floating Popover Animation Wrapper ──────────────────────────────────────
+
+class _FloatingPopoverWrapper extends StatefulWidget {
+  final Widget child;
+  final bool floatUp;
+
+  const _FloatingPopoverWrapper({
+    required this.child,
+    required this.floatUp,
+  });
+
+  @override
+  State<_FloatingPopoverWrapper> createState() => _FloatingPopoverWrapperState();
+}
+
+class _FloatingPopoverWrapperState extends State<_FloatingPopoverWrapper>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    final begin = widget.floatUp ? const Offset(0.0, 0.15) : const Offset(0.0, -0.15);
+    _offsetAnimation = Tween<Offset>(begin: begin, end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuad),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: widget.child,
+    );
+  }
+}
+
+// ─── Popover Container with Arrow Clip & Painting ───────────────────────────
+
+class PopoverContainer extends StatelessWidget {
+  final Widget child;
+  final bool arrowAtBottom;
+
+  const PopoverContainer({
+    super.key,
+    required this.child,
+    required this.arrowAtBottom,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return CustomPaint(
+      foregroundPainter: PopoverBorderPainter(
+        arrowAtBottom: arrowAtBottom,
+        borderColor: theme.colorScheme.outlineVariant,
+      ),
+      child: ClipPath(
+        clipper: PopoverArrowClipper(arrowAtBottom: arrowAtBottom),
+        child: Container(
+          width: 260,
+          color: theme.colorScheme.surface,
+          padding: EdgeInsets.only(
+            top: arrowAtBottom ? 0.0 : 8.0,
+            bottom: arrowAtBottom ? 8.0 : 0.0,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class PopoverArrowClipper extends CustomClipper<Path> {
+  final bool arrowAtBottom;
+
+  PopoverArrowClipper({required this.arrowAtBottom});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    const arrowWidth = 16.0;
+    const arrowHeight = 8.0;
+    const radius = 16.0; // matching border radius 16
+
+    if (arrowAtBottom) {
+      // Popover is above the cell, arrow points down (at the bottom)
+      final bodyHeight = size.height - arrowHeight;
+      
+      // Top left
+      path.moveTo(0, radius);
+      path.quadraticBezierTo(0, 0, radius, 0);
+      
+      // Top right
+      path.lineTo(size.width - radius, 0);
+      path.quadraticBezierTo(size.width, 0, size.width, radius);
+      
+      // Bottom right
+      path.lineTo(size.width, bodyHeight - radius);
+      path.quadraticBezierTo(size.width, bodyHeight, size.width - radius, bodyHeight);
+      
+      // Arrow pointing down at the center of the bottom
+      const centerX = 260.0 / 2; // size.width / 2 (popover width is fixed to 260.0)
+      path.lineTo(centerX + arrowWidth / 2, bodyHeight);
+      path.lineTo(centerX, size.height);
+      path.lineTo(centerX - arrowWidth / 2, bodyHeight);
+      
+      // Bottom left
+      path.lineTo(radius, bodyHeight);
+      path.quadraticBezierTo(0, bodyHeight, 0, bodyHeight - radius);
+      path.close();
+    } else {
+      // Popover is below the cell, arrow points up (at the top)
+      const bodyTop = arrowHeight;
+      
+      // Arrow pointing up at the center of the top
+      const centerX = 260.0 / 2;
+      path.moveTo(centerX - arrowWidth / 2, bodyTop);
+      path.lineTo(centerX, 0);
+      path.lineTo(centerX + arrowWidth / 2, bodyTop);
+      
+      // Top right
+      path.lineTo(size.width - radius, bodyTop);
+      path.quadraticBezierTo(size.width, bodyTop, size.width, bodyTop + radius);
+      
+      // Bottom right
+      path.lineTo(size.width, size.height - radius);
+      path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
+      
+      // Bottom left
+      path.lineTo(radius, size.height);
+      path.quadraticBezierTo(0, size.height, 0, size.height - radius);
+      
+      // Top left
+      path.lineTo(0, bodyTop + radius);
+      path.quadraticBezierTo(0, bodyTop, radius, bodyTop);
+      path.close();
+    }
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
+}
+
+class PopoverBorderPainter extends CustomPainter {
+  final bool arrowAtBottom;
+  final Color borderColor;
+  final double borderWidth;
+
+  PopoverBorderPainter({
+    required this.arrowAtBottom,
+    required this.borderColor,
+    this.borderWidth = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final clipper = PopoverArrowClipper(arrowAtBottom: arrowAtBottom);
+    final path = clipper.getClip(size);
+    
+    // Draw shadow
+    canvas.drawShadow(
+      path,
+      Colors.black,
+      8.0, // elevation
+      true, // transparentOccluder
+    );
+
+    // Draw border
+    final paint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth;
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+
