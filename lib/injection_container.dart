@@ -27,6 +27,11 @@ import 'features/calendar/domain/usecases/get_daily_note_usecase.dart';
 import 'features/calendar/domain/usecases/save_daily_note_usecase.dart';
 import 'features/calendar/presentation/cubit/calendar_cubit.dart';
 
+import 'features/notes/data/datasources/notes_local_datasource.dart';
+import 'features/notes/data/repositories/notes_repository_impl.dart';
+import 'features/notes/domain/repositories/notes_repository.dart';
+import 'features/notes/presentation/bloc/notes_bloc.dart';
+
 import 'core/theme/theme_bloc.dart';
 import 'core/services/sound_service.dart';
 import 'core/services/alarm_service.dart';
@@ -78,4 +83,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetDailyNoteUseCase(sl()));
   sl.registerLazySingleton(() => SaveDailyNoteUseCase(sl()));
   sl.registerFactory(() => CalendarCubit(getDailyNoteUseCase: sl(), saveDailyNoteUseCase: sl()));
+
+  // ─── Notes Feature ───
+  sl.registerLazySingleton(() => NotesLocalDataSource(sl()));
+  sl.registerLazySingleton<NotesRepository>(
+      () => NotesRepositoryImpl(sl()));
+  sl.registerFactory(() => NotesBloc(repository: sl()));
 }

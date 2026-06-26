@@ -10,6 +10,7 @@ import '../../features/task/presentation/pages/add_task_page.dart';
 import '../../features/category/presentation/bloc/category_bloc.dart';
 import '../../features/gamification/presentation/bloc/gamification_bloc.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
+import '../../features/notes/presentation/pages/notes_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
 /// Root shell that holds the 3-tab navigation (Home / History / Settings)
@@ -56,6 +57,8 @@ class _MainShellState extends State<MainShell> {
       case 1:
         return const CalendarPage();
       case 2:
+        return const NotesPage();
+      case 3:
         return const SettingsPage();
       default:
         return const SizedBox.shrink();
@@ -73,7 +76,7 @@ class _MainShellState extends State<MainShell> {
                 // Main content — IndexedStack keeps each page alive
                 IndexedStack(
                   index: _currentIndex,
-                  children: List.generate(3, (i) => _buildPage(i)),
+                  children: List.generate(4, (i) => _buildPage(i)),
                 ),
 
                 // Confetti overlay (only on home tab)
