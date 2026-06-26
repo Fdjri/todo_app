@@ -10,6 +10,8 @@ import '../../../task/presentation/bloc/task_bloc.dart';
 import '../../../category/presentation/bloc/category_bloc.dart';
 import '../../../task/presentation/pages/add_task_page.dart';
 import '../cubit/calendar_cubit.dart';
+import '../../../finance/presentation/bloc/finance_bloc.dart';
+import '../../../finance/domain/entities/finance_entities.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -269,6 +271,51 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
     }
   }
 
+  List<TaskEntity> _generateVirtualTasks(List<GoalEntity> goals) {
+    final List<TaskEntity> virtualTasks = [];
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    for (final goal in goals) {
+      final remaining = goal.targetAmount - goal.savedAmount;
+      if (remaining <= 0) continue; // Goal is already reached
+
+      int daysNeeded = 0;
+      if (goal.dailySaveAmount != null && goal.dailySaveAmount! > 0) {
+        daysNeeded = (remaining / goal.dailySaveAmount!).ceil();
+      } else if (goal.monthlyTimeframeMonths != null && goal.monthlyTimeframeMonths! > 0) {
+        final dailyRate = goal.targetAmount / (goal.monthlyTimeframeMonths! * 30);
+        if (dailyRate > 0) {
+          daysNeeded = (remaining / dailyRate).ceil();
+        } else {
+          daysNeeded = 30;
+        }
+      } else {
+        daysNeeded = 30;
+      }
+
+      // Cap to 365 days to prevent loop overhead
+      final capDays = daysNeeded > 365 ? 365 : daysNeeded;
+
+      for (int i = 0; i <= capDays; i++) {
+        final cellDate = today.add(Duration(days: i));
+        final daysLeftForCell = daysNeeded - i;
+
+        virtualTasks.add(
+          TaskEntity(
+            id: 'goal_countdown_${goal.id}_${cellDate.millisecondsSinceEpoch}',
+            title: '🎀 $daysLeftForCell days until u reach it to ${goal.name}',
+            description: 'Keep going, bestie! 🌸 You can do it! Saving a little bit every day brings you closer to your dream! ✨',
+            categoryId: 'finance_goal',
+            priority: TaskPriority.low,
+            dueDate: cellDate,
+            createdAt: goal.createdAt,
+          ),
+        );
+      }
+    }
+    return virtualTasks;
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint('CALENDAR_PAGE: build() called, _currentView=$_currentView, _selectedDate=$_selectedDate');
@@ -282,15 +329,23 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
       body: SafeArea(
         child: BlocBuilder<TaskBloc, TaskState>(
           builder: (context, taskState) {
-            final allTasks = taskState is TaskLoaded ? taskState.allTasks : <TaskEntity>[];
-            return Column(
-              children: [
-                _buildHeader(isDark),
-                Expanded(
-                  child: _buildMainCalendarView(allTasks, isDark),
-                ),
-                _buildBottomSelectorBar(),
-              ],
+            return BlocBuilder<FinanceBloc, FinanceState>(
+              builder: (context, financeState) {
+                final realTasks = taskState is TaskLoaded ? taskState.allTasks : <TaskEntity>[];
+                final goals = financeState is FinanceLoaded ? financeState.goals : <GoalEntity>[];
+                
+                final allTasks = [...realTasks, ..._generateVirtualTasks(goals)];
+
+                return Column(
+                  children: [
+                    _buildHeader(isDark),
+                    Expanded(
+                      child: _buildMainCalendarView(allTasks, isDark),
+                    ),
+                    _buildBottomSelectorBar(),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -1293,6 +1348,44 @@ class _CalendarPageState extends State<CalendarPage> with SingleTickerProviderSt
   }
 
   void _openTaskDetailPage(BuildContext ctx, TaskEntity task) {
+    if (task.id.startsWith('goal_countdown_')) {
+      showDialog(
+        context: ctx,
+        builder: (dialogContext) {
+          final theme = Theme.of(dialogContext);
+          return shadcn.AlertDialog(
+            title: const Text('Goal Encouragement 🌸'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🎀', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 12),
+                Text(
+                  task.title,
+                  style: AppTypography.bodyBold(color: theme.colorScheme.primary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  task.description ?? '',
+                  style: AppTypography.body(color: theme.colorScheme.onSurface),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              shadcn.Button(
+                style: const shadcn.ButtonStyle.primary(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Thank you, bestie! ✨'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     showDialog(
       context: ctx,
       builder: (dialogContext) => MultiBlocProvider(

@@ -32,6 +32,11 @@ import 'features/notes/data/repositories/notes_repository_impl.dart';
 import 'features/notes/domain/repositories/notes_repository.dart';
 import 'features/notes/presentation/bloc/notes_bloc.dart';
 
+import 'features/finance/data/datasources/finance_local_datasource.dart';
+import 'features/finance/data/repositories/finance_repository_impl.dart';
+import 'features/finance/domain/repositories/finance_repository.dart';
+import 'features/finance/presentation/bloc/finance_bloc.dart';
+
 import 'core/theme/theme_bloc.dart';
 import 'core/services/sound_service.dart';
 import 'core/services/alarm_service.dart';
@@ -89,4 +94,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<NotesRepository>(
       () => NotesRepositoryImpl(sl()));
   sl.registerFactory(() => NotesBloc(repository: sl()));
+
+  // ─── Finance Feature ───
+  sl.registerLazySingleton(() => FinanceLocalDataSource(sl()));
+  sl.registerLazySingleton<FinanceRepository>(
+      () => FinanceRepositoryImpl(sl()));
+  sl.registerFactory(() => FinanceBloc(repository: sl()));
 }

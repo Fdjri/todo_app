@@ -54,7 +54,7 @@ class NeonNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -89,12 +89,22 @@ class NeonNavBar extends StatelessWidget {
                 surface: background,
               ),
               _NavItem(
-                icon: Icons.settings_rounded,
-                label: 'Settings',
+                icon: Icons.savings_rounded,
+                label: 'Finance',
                 isActive: currentIndex == 3,
                 activeColor: primary,
                 inactiveColor: textHint,
                 onTap: () => onTap(3),
+                isDark: isDark,
+                surface: background,
+              ),
+              _NavItem(
+                icon: Icons.settings_rounded,
+                label: 'Settings',
+                isActive: currentIndex == 4,
+                activeColor: primary,
+                inactiveColor: textHint,
+                onTap: () => onTap(4),
                 isDark: isDark,
                 surface: background,
               ),
@@ -136,7 +146,7 @@ class _NavItem extends StatelessWidget {
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 20 : 16,
+          horizontal: isActive ? 12 : 8,
           vertical: 8,
         ),
         decoration: BoxDecoration(

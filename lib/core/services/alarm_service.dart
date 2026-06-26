@@ -23,6 +23,8 @@ class AlarmService {
 
   static const String _channelId = 'workaholic_alarm';
   static const String _channelName = 'Workaholic Alarms 🎀';
+  static const String _reminderChannelId = 'workaholic_reminder';
+  static const String _reminderChannelName = 'Savings & Goals Reminders 🌸';
 
   /// Called when a notification fires while app is foreground/background.
   /// Set this in main.dart to navigate to AlarmPage.
@@ -57,6 +59,21 @@ class AlarmService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
+
+    // Create high-priority floating notification channel for reminders (no full screen intent)
+    const reminderChannel = AndroidNotificationChannel(
+      _reminderChannelId,
+      _reminderChannelName,
+      description: 'Daily savings reminders and encouragement notifications',
+      importance: Importance.high,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(reminderChannel);
   }
 
   // ─── Permission helpers ───────────────────────────────────────────────────
@@ -232,6 +249,78 @@ class AlarmService {
         );
       } catch (innerErr) {
         debugPrint('[AlarmService] Failed to schedule fallback raw inexact alarm: $innerErr');
+      }
+    }
+  }
+
+  /// Schedule daily savings reminder at 6:00 PM (18:00) as a floating notification
+  Future<void> scheduleDailySavingsReminder() async {
+    const int notifId = 888888; // Unique ID for daily savings reminder
+    
+    // Check/request permission
+    await requestNotificationPermission();
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      18, // 18:00 (6:00 PM)
+      0,
+    );
+
+    // If 6 PM has already passed today, schedule for tomorrow
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    try {
+      await _plugin.zonedSchedule(
+        notifId,
+        'Savings Time, Bestie! 🌸',
+        "Don't forget to set aside some money for your dream life goals today! 🎀✨",
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _reminderChannelId,
+            _reminderChannelName,
+            importance: Importance.high,
+            priority: Priority.high,
+            autoCancel: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      debugPrint('[AlarmService] Scheduled daily savings reminder at $scheduledDate (repeating daily at 6 PM)');
+    } catch (e) {
+      debugPrint('[AlarmService] Failed to schedule exact daily savings reminder: $e. Falling back to inexact.');
+      try {
+        await _plugin.zonedSchedule(
+          notifId,
+          'Savings Time, Bestie! 🌸',
+          "Don't forget to set aside some money for your dream life goals today! 🎀✨",
+          scheduledDate,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              _reminderChannelId,
+              _reminderChannelName,
+              importance: Importance.high,
+              priority: Priority.high,
+              autoCancel: true,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+        debugPrint('[AlarmService] Scheduled fallback daily savings reminder at $scheduledDate (repeating daily at 6 PM)');
+      } catch (innerErr) {
+        debugPrint('[AlarmService] Failed to schedule fallback daily savings reminder: $innerErr');
       }
     }
   }

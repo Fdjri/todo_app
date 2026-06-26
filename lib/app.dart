@@ -15,6 +15,7 @@ import 'features/alarm/presentation/pages/alarm_page.dart';
 import 'features/settings/presentation/cubit/settings_cubit.dart';
 import 'features/calendar/presentation/cubit/calendar_cubit.dart';
 import 'features/notes/presentation/bloc/notes_bloc.dart';
+import 'features/finance/presentation/bloc/finance_bloc.dart';
 import 'core/widgets/main_shell.dart';
 
 class WorkaholicApp extends StatefulWidget {
@@ -45,6 +46,7 @@ class _WorkaholicAppState extends State<WorkaholicApp> {
         BlocProvider(create: (_) => sl<SettingsCubit>()),
         BlocProvider(create: (_) => sl<CalendarCubit>()),
         BlocProvider(create: (_) => sl<NotesBloc>()..add(LoadNotes())),
+        BlocProvider(create: (_) => sl<FinanceBloc>()..add(LoadFinanceData())),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
