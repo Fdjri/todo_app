@@ -404,6 +404,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         if (state is TaskLoaded) {
           if (state.tasks.isEmpty) {
             return SliverFillRemaining(
+              hasScrollBody: false,
               child: EmptyStateWidget(
                 onAddTask: () => _showAddTask(context),
               ),
