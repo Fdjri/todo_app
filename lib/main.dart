@@ -23,6 +23,10 @@ void main() async {
 
     // ─── Wire notification → AlarmPage navigation ───
     AlarmService.onAlarmTriggered = (taskId, taskTitle) {
+      if (AlarmPage.isShowing) {
+        debugPrint('[AlarmService] AlarmPage is already showing, skipping push');
+        return;
+      }
       navigatorKey.currentState?.push(
         MaterialPageRoute(
           settings: const RouteSettings(name: '/alarm'),

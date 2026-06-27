@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -20,6 +21,9 @@ class AlarmService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+
+  // Active foreground timers mapped by taskId
+  final Map<String, Timer> _activeTimers = {};
 
   static const String _channelId = 'workaholic_alarm';
   static const String _channelName = 'Workaholic Alarms 🎀';
@@ -114,6 +118,18 @@ class AlarmService {
     // Skip if already in the past
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
+    // Cancel existing timer first
+    _activeTimers[task.id]?.cancel();
+    _activeTimers.remove(task.id);
+
+    // Schedule foreground timer
+    final diff = scheduledDate.difference(tz.TZDateTime.now(tz.local));
+    _activeTimers[task.id] = Timer(diff, () {
+      debugPrint('[AlarmService] Foreground timer fired for task: ${task.title}');
+      AlarmService.onAlarmTriggered?.call(task.id, task.title);
+      _activeTimers.remove(task.id);
+    });
+
     try {
       await _plugin.zonedSchedule(
         _notifId(task.id),
@@ -177,6 +193,8 @@ class AlarmService {
   /// Cancel scheduled alarm for [taskId].
   Future<void> cancelAlarm(String taskId) async {
     await _plugin.cancel(_notifId(taskId));
+    _activeTimers[taskId]?.cancel();
+    _activeTimers.remove(taskId);
     debugPrint('[AlarmService] Cancelled alarm for $taskId');
   }
 
@@ -194,6 +212,18 @@ class AlarmService {
     final payload = jsonEncode({'id': taskId, 'title': taskTitle});
     final scheduledDate = tz.TZDateTime.from(scheduledAt, tz.local);
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+    // Cancel existing timer first
+    _activeTimers[taskId]?.cancel();
+    _activeTimers.remove(taskId);
+
+    // Schedule foreground timer
+    final diff = scheduledDate.difference(tz.TZDateTime.now(tz.local));
+    _activeTimers[taskId] = Timer(diff, () {
+      debugPrint('[AlarmService] Foreground raw timer fired for task: $taskTitle');
+      AlarmService.onAlarmTriggered?.call(taskId, taskTitle);
+      _activeTimers.remove(taskId);
+    });
 
     try {
       await _plugin.zonedSchedule(

@@ -24,11 +24,9 @@ class AlarmPage extends StatefulWidget {
   final String taskId;
   final String taskTitle;
 
-  const AlarmPage({
-    super.key,
-    required this.taskId,
-    required this.taskTitle,
-  });
+  static bool isShowing = false;
+
+  const AlarmPage({super.key, required this.taskId, required this.taskTitle});
 
   @override
   State<AlarmPage> createState() => _AlarmPageState();
@@ -51,6 +49,7 @@ class _AlarmPageState extends State<AlarmPage>
   @override
   void initState() {
     super.initState();
+    AlarmPage.isShowing = true;
     _startRing();
     _startClock();
 
@@ -121,13 +120,22 @@ class _AlarmPageState extends State<AlarmPage>
     } catch (_) {}
   }
 
+  String get _cleanTaskId {
+    String id = widget.taskId;
+    while (id.endsWith('_snooze')) {
+      id = id.substring(0, id.length - 8);
+    }
+    return id;
+  }
+
   Future<void> _done() async {
     await _stopAlarm();
     await AlarmService().cancelAlarm(widget.taskId);
-    
+    await AlarmService().cancelAlarm(_cleanTaskId);
+
     if (!mounted) return;
     try {
-      context.read<TaskBloc>().add(ToggleTaskCompletion(widget.taskId));
+      context.read<TaskBloc>().add(ToggleTaskCompletion(_cleanTaskId));
       context.read<GamificationBloc>().add(TaskCompleted());
       context.read<GamificationBloc>().add(UpdateStreak());
     } catch (e) {
@@ -140,27 +148,29 @@ class _AlarmPageState extends State<AlarmPage>
   Future<void> _snooze() async {
     await _stopAlarm();
     await AlarmService().cancelAlarm(widget.taskId);
+    await AlarmService().cancelAlarm(_cleanTaskId);
     // Reschedule 5 minutes later
     final snoozeTime = DateTime.now().add(const Duration(minutes: 5));
-    // We don't have the full TaskEntity here, so we schedule manually
-    // by reusing AlarmService internal logic via a fake-minimal task.
-    // We'll use a simplified direct call to the plugin:
     await _scheduleSnooze(snoozeTime);
     if (mounted) Navigator.of(context).pop(AlarmResult.snoozed);
   }
 
   Future<void> _scheduleSnooze(DateTime at) async {
-    // Create a minimal temporary task entity for snooze
-    // We import the entity and build a minimal version
+    // Strip "🔔 Snooze: " prefix if it exists to avoid infinite prepending
+    String cleanTitle = widget.taskTitle;
+    if (cleanTitle.startsWith('🔔 Snooze: ')) {
+      cleanTitle = cleanTitle.substring('🔔 Snooze: '.length);
+    }
     await AlarmService().scheduleAlarmRaw(
-      taskId: '${widget.taskId}_snooze',
-      taskTitle: '🔔 Snooze: ${widget.taskTitle}',
+      taskId: _cleanTaskId,
+      taskTitle: '🔔 Snooze: $cleanTitle',
       scheduledAt: at,
     );
   }
 
   @override
   void dispose() {
+    AlarmPage.isShowing = false;
     _player.dispose();
     _pulseController.dispose();
     _clockTimer.cancel();
@@ -208,11 +218,7 @@ class _AlarmPageState extends State<AlarmPage>
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        bg,
-                        blush.withValues(alpha: 0.8),
-                        bg,
-                      ],
+                      colors: [bg, blush.withValues(alpha: 0.8), bg],
                     ),
                   ),
                 ),
@@ -225,11 +231,17 @@ class _AlarmPageState extends State<AlarmPage>
                     duration: const Duration(milliseconds: 50),
                     color: _dragOffset > 0
                         ? AppColors.successDark.withValues(
-                            alpha: (_dragOffset / _swipeThreshold)
-                                .clamp(0, 0.35))
+                            alpha: (_dragOffset / _swipeThreshold).clamp(
+                              0,
+                              0.35,
+                            ),
+                          )
                         : AppColors.infoDark.withValues(
-                            alpha: (-_dragOffset / _swipeThreshold)
-                                .clamp(0, 0.35)),
+                            alpha: (-_dragOffset / _swipeThreshold).clamp(
+                              0,
+                              0.35,
+                            ),
+                          ),
                   ),
                 ),
 
@@ -250,8 +262,7 @@ class _AlarmPageState extends State<AlarmPage>
                     const SizedBox(height: 8),
                     Text(
                       'Alarm ringed!',
-                      style: AppTypography.caption(
-                          color: textHint),
+                      style: AppTypography.caption(color: textHint),
                     ),
 
                     const Spacer(),
@@ -262,10 +273,7 @@ class _AlarmPageState extends State<AlarmPage>
                       clipBehavior: Clip.none,
                       children: [
                         const Positioned(
-                          child: _FireworksWidget(
-                            width: 320,
-                            height: 320,
-                          ),
+                          child: _FireworksWidget(width: 320, height: 320),
                         ),
                         ScaleTransition(
                           scale: _pulseAnim,
@@ -282,8 +290,7 @@ class _AlarmPageState extends State<AlarmPage>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      primary.withValues(alpha: 0.55),
+                                  color: primary.withValues(alpha: 0.55),
                                   blurRadius: 32,
                                   spreadRadius: 8,
                                 ),
@@ -311,8 +318,7 @@ class _AlarmPageState extends State<AlarmPage>
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Text(
                         widget.taskTitle,
-                        style: AppTypography.h1(
-                            color: textPrimary),
+                        style: AppTypography.h1(color: textPrimary),
                         textAlign: TextAlign.center,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -332,9 +338,8 @@ class _AlarmPageState extends State<AlarmPage>
               // ─── Drag knob that moves with finger ───
               if (_dragOffset != 0)
                 Positioned(
-                  left: MediaQuery.of(context).size.width / 2 +
-                      _dragOffset -
-                      30,
+                  left:
+                      MediaQuery.of(context).size.width / 2 + _dragOffset - 30,
                   top: MediaQuery.of(context).size.height * 0.78,
                   child: Container(
                     width: 60,
@@ -346,10 +351,11 @@ class _AlarmPageState extends State<AlarmPage>
                           : AppColors.infoDark,
                       boxShadow: [
                         BoxShadow(
-                          color: (_dragOffset > 0
-                                  ? AppColors.successDark
-                                  : AppColors.infoDark)
-                              .withValues(alpha: 0.6),
+                          color:
+                              (_dragOffset > 0
+                                      ? AppColors.successDark
+                                      : AppColors.infoDark)
+                                  .withValues(alpha: 0.6),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
@@ -444,17 +450,26 @@ class _SwipeHint extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              color: isActive ? color : color.withValues(alpha: 0.5),
-              size: 28),
+          Icon(
+            icon,
+            color: isActive ? color : color.withValues(alpha: 0.5),
+            size: 28,
+          ),
           const SizedBox(height: 4),
-          Text(label,
-              style: AppTypography.small(
-                  color: isActive ? color : color.withValues(alpha: 0.5))),
-          Text(sublabel,
-              style: AppTypography.small(
-                  color:
-                      isActive ? color.withValues(alpha: 0.8) : color.withValues(alpha: 0.35))),
+          Text(
+            label,
+            style: AppTypography.small(
+              color: isActive ? color : color.withValues(alpha: 0.5),
+            ),
+          ),
+          Text(
+            sublabel,
+            style: AppTypography.small(
+              color: isActive
+                  ? color.withValues(alpha: 0.8)
+                  : color.withValues(alpha: 0.35),
+            ),
+          ),
         ],
       ),
     );
@@ -479,8 +494,8 @@ class _FireworkParticle {
     required this.vy,
     required this.size,
     required this.color,
-  })  : opacity = 1.0,
-        life = 1.0;
+  }) : opacity = 1.0,
+       life = 1.0;
 }
 
 class _FireworkExplosion {
@@ -492,10 +507,7 @@ class _FireworksWidget extends StatefulWidget {
   final double width;
   final double height;
 
-  const _FireworksWidget({
-    required this.width,
-    required this.height,
-  });
+  const _FireworksWidget({required this.width, required this.height});
 
   @override
   State<_FireworksWidget> createState() => _FireworksWidgetState();
@@ -511,10 +523,10 @@ class _FireworksWidgetState extends State<_FireworksWidget>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..addListener(_updateParticles)..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..addListener(_updateParticles)
+          ..repeat();
   }
 
   @override
@@ -573,14 +585,16 @@ class _FireworksWidgetState extends State<_FireworksWidget>
     for (int i = 0; i < numParticles; i++) {
       final angle = _random.nextDouble() * 2 * pi;
       final speed = 1.0 + _random.nextDouble() * 4.5;
-      list.add(_FireworkParticle(
-        x: cx,
-        y: cy,
-        vx: cos(angle) * speed,
-        vy: sin(angle) * speed,
-        size: 2.0 + _random.nextDouble() * 3.5,
-        color: colors[_random.nextInt(colors.length)],
-      ));
+      list.add(
+        _FireworkParticle(
+          x: cx,
+          y: cy,
+          vx: cos(angle) * speed,
+          vy: sin(angle) * speed,
+          size: 2.0 + _random.nextDouble() * 3.5,
+          color: colors[_random.nextInt(colors.length)],
+        ),
+      );
     }
     _explosions.add(_FireworkExplosion(list));
   }
